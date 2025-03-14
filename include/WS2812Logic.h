@@ -362,6 +362,9 @@ inline void Loop(uint32_t &current_time)
 
 		DMADraw();
 
+		//Logger.Print("+SF-PXL=128,16,6144\r\n");
+		//Logger.Print(frame_buffer_ptr, frame_buffer_len, LOG_OUT_TYPE_BYTES);
+
 		DEBUG_LOG_TOPIC("DMADraw", "time: %d\n", (HAL_GetTick() - lasttime));
 		lasttime = HAL_GetTick();
 	}
