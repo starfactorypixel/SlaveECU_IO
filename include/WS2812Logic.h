@@ -10,11 +10,14 @@
 
 
 
-#define DISPLAY_WIDTH	128
-#define DISPLAY_HEIGHT	16
+#define DISPLAY_WIDTH		128
+#define DISPLAY_HEIGHT		16
+#define DISPLAY_FRAME_RATE	100
 #include <WS2812Manager.h>
 #include <effects/WS2812EffectFire.h>
 #include <effects/WS2812EffectSphere.h>
+#include <effects/WS2812EffectTest.h>
+#include <effects/WS2812EffectGameOfLife.h>
 
 
 //extern TIM_HandleTypeDef htim2;
@@ -41,14 +44,6 @@ namespace WS2812Logic
 	//MatrixLed<CFG_Layers, CFG_Width, CFG_Height> matrixObj(CFG_Delay);
 
 
-	typedef struct __attribute__((__packed__))
-	{
-		uint8_t G;
-		uint8_t R;
-		uint8_t B;
-	} color_t;
-
-	//color_t _frame_buff[(CFG_Width * CFG_Height)];
 
 	
 	uint8_t *frame_buffer_ptr;
@@ -58,20 +53,6 @@ namespace WS2812Logic
 	
 
 
-/*
-	struct frame_buffer_t
-	{
-		bool is_drawing;		// Флаг отрисовки буфера на экран
-		bool is_ready;			// Флаг готовности буфера к отрисовке
-		union
-		{
-			uint8_t raw[(CFG_Width * CFG_Height * sizeof(color_t))];
-			color_t pixel[(CFG_Width * CFG_Height)];
-		};
-	} frame_buffer;
-*/
-
-
 
 
 
@@ -79,6 +60,8 @@ namespace WS2812Logic
 	WS2812Manager manager;
 	WS2812EffectFire effect_fire;
 	WS2812EffectSphere effect_sphere;
+	WS2812EffectTest effect_test;
+	WS2812EffectGameOfLife effect_game;
 
 
 
@@ -264,8 +247,8 @@ static void RGB_TIM_DMADelayPulseCplt(DMA_HandleTypeDef *hdma) {
         TIM_CHANNEL_STATE_SET(htim, TIM_CH, HAL_TIM_CHANNEL_STATE_READY);
         //ARGB_LOC_ST = ARGB_READY;
 
-		manager.frame_buffer.is_drawing = false;
-		manager.frame_buffer.is_ready = false;
+		manager.frame_buffer.is_sending = false;
+		manager.frame_buffer.is_rendered = false;
 				
     }
     htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
@@ -315,7 +298,7 @@ inline void Setup()
 	srand( Analog::mux.Get(10) * 10 );
 
 	manager.frame_buffer.Convertor = iterator1;
-	manager.SelectEffect(effect_fire);
+	manager.SelectEffect(effect_game);
 
 
 
@@ -344,13 +327,13 @@ inline void Loop(uint32_t &current_time)
 
 		if(idx == 0)
 		{
-			manager.SelectEffect(effect_fire);
+			//manager.SelectEffect(effect_fire);
 			idx = 1;
 		}
 		
 		else if(idx == 1)
 		{
-			manager.SelectEffect(effect_sphere);
+			//manager.SelectEffect(effect_sphere);
 			idx = 0;
 		}
 
@@ -372,25 +355,15 @@ inline void Loop(uint32_t &current_time)
 	}
 */
 
-	
-	//static uint16_t draw_idx = 0;
-	if(manager.frame_buffer.is_ready == true && manager.frame_buffer.is_drawing == false)
+	static uint32_t lasttime = 0;
+	if(manager.frame_buffer.is_sending == false && manager.frame_buffer.is_rendered == true)
 	{
-/*
-		//memset(_frame_buff, 0x00, sizeof(_frame_buff));
-		_frame_buff[ iterator111(draw_idx) ] = {0x00, 0x00, 0x00};
-		
-		if(++draw_idx > (sizeof(_frame_buff) / sizeof(_frame_buff[0])) )
-			draw_idx = 0;
-		
-		_frame_buff[ iterator111(draw_idx) ] = {0x33, 0x00, 0x00};
-*/		
-		//memset(_frame_buff, 0x00, sizeof(_frame_buff));
-		//updateFireEffect();
-		//space_flight_loop();
+		manager.frame_buffer.is_sending = true;
+
 		DMADraw();
 
-		manager.frame_buffer.is_drawing = true;
+		DEBUG_LOG_TOPIC("DMADraw", "time: %d\n", (HAL_GetTick() - lasttime));
+		lasttime = HAL_GetTick();
 	}
 
 
