@@ -103,7 +103,7 @@ namespace WS2812Logic
 		
 		GPIO_InitStruct.Pin = GPIO_PIN_0;
 		GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;											// ????????????????
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;											// ????????????????
 		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 		
 		return;
@@ -149,7 +149,7 @@ namespace WS2812Logic
 		sConfigOC.OCMode = TIM_OCMODE_PWM1;
 		sConfigOC.Pulse = 0;
 		sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-		sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+		sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
 		if(HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
 		{
 			// Error_Handler();
@@ -200,7 +200,7 @@ namespace WS2812Logic
 		#endif
 		
 		#ifdef TYPE_WS2812
-			PWM_HI = (uint8_t) (APBfq * 0.65) - 1;     // Log.1 - 56% - 0.70us
+			PWM_HI = (uint8_t) (APBfq * 0.67) - 1;     // Log.1 - 56% - 0.70us
 			PWM_LO = (uint8_t) (APBfq * 0.34) - 1;     // Log.0 - 28% - 0.35us
 		#endif
 		
