@@ -14,14 +14,17 @@ class WS2812EffectFire : public WS2812EffectInterface
 		
 		virtual void Tick(uint32_t time) override
 		{
-			if(_frame_buffer->is_drawing == true) return;
-			
-			updateFireEffect();
-			_frame_buffer->is_ready = true;
-			
 			return;
 		}
 		
+		virtual void Render(uint32_t time) override
+		{
+			updateFireEffect();
+			_frame_buffer->is_rendered = true;
+			
+			return;
+		}
+
 	private:
 		
 		// Функция для обновления эффекта огня

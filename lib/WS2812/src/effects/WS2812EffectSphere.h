@@ -34,15 +34,18 @@ class WS2812EffectSphere : public WS2812EffectInterface
 		}
 		
 		virtual void Tick(uint32_t time) override
-		{
-			if(_frame_buffer->is_drawing) return;
-			
-			updateEffect();
-			_frame_buffer->is_ready = true;
-			
+		{			
 			return;
 		}
 		
+		virtual void Render(uint32_t time) override
+		{
+			updateEffect();
+			_frame_buffer->is_rendered = true;
+			
+			return;
+		}
+
 	private:
 		
 		void updateEffect()
@@ -81,7 +84,7 @@ class WS2812EffectSphere : public WS2812EffectInterface
 		
 		void render()
 		{
-			memset(_frame_buffer->raw, 0x00, sizeof(_frame_buffer->raw));
+			memset_dma32(_frame_buffer->raw, 0x00000000, sizeof(_frame_buffer->raw));
 			
 			static constexpr uint8_t width = _frame_buffer->width;
 			static constexpr uint8_t height = _frame_buffer->height;

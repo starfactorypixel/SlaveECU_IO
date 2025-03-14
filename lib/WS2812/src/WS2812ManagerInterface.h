@@ -12,15 +12,18 @@ class WS2812ManagerInterface
 			uint8_t B;
 		};
 		
-		struct frame_buffer_t
+		struct __attribute__((aligned(4))) frame_buffer_t
 		{
-			bool is_drawing = false;							// Флаг отрисовки буфера на экран
-			bool is_ready = false;								// Флаг готовности буфера к отрисовке
+			volatile bool is_sending = false;					// Флаг выполнения отправки данных на экран
+			volatile bool is_rendered = false;					// Флаг готовности буфера к отправкe
 			static constexpr uint8_t width = DISPLAY_WIDTH;		// Ширина кадра
 			static constexpr uint8_t height = DISPLAY_HEIGHT;	// Высота кадра
-			union
+			union __attribute__((aligned(4)))
 			{
+				// Массив байт кадрового буфера
 				uint8_t raw[(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(color_t))];
+
+				// Массив пикселей кадрового буфера
 				color_t pixel[(DISPLAY_WIDTH * DISPLAY_HEIGHT)];
 			};
 			
