@@ -1,6 +1,7 @@
 #pragma once
 #include <inttypes.h>
 #include <string.h>
+#include "FastString.h"
 
 class WS2812Manager;
 
@@ -18,6 +19,7 @@ class WS2812EffectInterface
 
 		virtual void Init() = 0;
 		virtual void Tick(uint32_t time) = 0;
+		virtual void Render(uint32_t time) = 0;
 		
 	protected:
 		

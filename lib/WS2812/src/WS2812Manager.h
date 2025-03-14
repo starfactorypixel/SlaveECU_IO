@@ -17,14 +17,25 @@ class WS2812Manager : public WS2812ManagerInterface
 		
 			return;
 		}
+		
 		void Tick(uint32_t time)
 		{
 			if(_effect == nullptr) return;
-			if(time - last_tick < 5) return;
-			last_tick = time;
-			
-			_effect->Tick(time);
 
+			if(time - last_tick > 0)
+			{
+				last_tick = time;
+				
+				_effect->Tick(time);
+			}
+			
+			if(frame_buffer.is_sending == false && time - last_render >= DISPLAY_FRAME_RATE)
+			{
+				last_render = time;
+				
+				_effect->Render(time);
+			}
+			
 			return;
 		}
 		
@@ -34,5 +45,6 @@ class WS2812Manager : public WS2812ManagerInterface
 		
 		WS2812EffectInterface *_effect = nullptr;
 		uint32_t last_tick = 0;
+		uint32_t last_render = 0;
 
 };

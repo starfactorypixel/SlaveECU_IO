@@ -4,10 +4,11 @@
 #include "WS2812EffectInterface.h"
 
 /*
-	_manager - объект менеджера
-	_frame_buffer - объект кадрового буфера с параметрами и флагами
+	_manager - Объект менеджера
+	_frame_buffer - Объект кадрового буфера с параметрами и флагами
 	Init() - Вызывается при инициализации эффекта
-	Tick() - Вызывается при каждые 5 мс
+	Tick() - Вызывается не менее чем каждые 1 мс
+	Render() - Вызывается каждые 100 мс
 	Для расчёта положения пикселя в кадровом буфере нужно воспользоваться такой конструкцией:
 		uint16_t index = _frame_buffer->Convertor(index_2d, width, height);
 		_frame_buffer->pixel[index] = color;
@@ -15,6 +16,9 @@
 
 class WS2812EffectTemplate : public WS2812EffectInterface
 {
+	static constexpr uint8_t width = WS2812Manager::frame_buffer_t::width;
+	static constexpr uint8_t height = WS2812Manager::frame_buffer_t::height;
+	
 	public:
 		
 		virtual void Init() override
@@ -24,10 +28,13 @@ class WS2812EffectTemplate : public WS2812EffectInterface
 		
 		virtual void Tick(uint32_t time) override
 		{
-			if(_frame_buffer->is_drawing == true) return;
-			
+			return;
+		}
+		
+		virtual void Render(uint32_t time) override
+		{
 			//updateEffect();
-			_frame_buffer->is_ready = true;
+			_frame_buffer->is_rendered = true;
 			
 			return;
 		}
