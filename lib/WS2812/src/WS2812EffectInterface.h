@@ -1,17 +1,15 @@
 #pragma once
 #include <inttypes.h>
 #include <string.h>
+#include "FrameBuffer.h"
 #include "FastString.h"
-
-class WS2812Manager;
 
 class WS2812EffectInterface
 {
 	public:
-
-		void PrepareInit(WS2812Manager *manager, WS2812ManagerInterface::frame_buffer_t &frame_buffer)
+		
+		void PrepareInit(FrameBuffer &frame_buffer)
 		{
-			_manager = manager;
 			_frame_buffer = &frame_buffer;
 			
 			return;
@@ -43,7 +41,7 @@ class WS2812EffectInterface
 			return (1.0f - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0f);
 		}
 		
-		WS2812Manager *_manager = nullptr;
-		WS2812ManagerInterface::frame_buffer_t *_frame_buffer = nullptr;
-		
+		FrameBuffer *_frame_buffer = nullptr;
+		using color_t = FrameBuffer::color_t;
+	
 };

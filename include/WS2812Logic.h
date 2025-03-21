@@ -10,15 +10,16 @@
 
 
 
-#define DISPLAY_WIDTH		128
+#define DISPLAY_WIDTH		128		// переименовать в FRAME_ OR NOT?
 #define DISPLAY_HEIGHT		16
-#define DISPLAY_FRAME_RATE	100
+#define DISPLAY_PIXEL_TYPE	2
+#define DISPLAY_TYPE		2
+#include <FrameBuffer.h>
 #include <WS2812Manager.h>
 #include <effects/WS2812EffectFire.h>
 #include <effects/WS2812EffectSphere.h>
-#include <effects/WS2812EffectTest.h>
 #include <effects/WS2812EffectGameOfLife.h>
-
+#include <effects/WS2812EffectPrimitiveLights.h>
 
 //extern TIM_HandleTypeDef htim2;
 //extern DMA_HandleTypeDef hdma_tim2_ch1;
@@ -53,15 +54,15 @@ namespace WS2812Logic
 	
 
 
+	
 
+	FrameBuffer buffer;
 
-
-
-	WS2812Manager manager;
+	WS2812Manager manager(buffer);
 	WS2812EffectFire effect_fire;
 	WS2812EffectSphere effect_sphere;
-	WS2812EffectTest effect_test;
 	WS2812EffectGameOfLife effect_game;
+	WS2812EffectPrimitiveLights effect_primitive;
 
 
 
@@ -247,10 +248,10 @@ static void RGB_TIM_DMADelayPulseCplt(DMA_HandleTypeDef *hdma) {
         TIM_CHANNEL_STATE_SET(htim, TIM_CH, HAL_TIM_CHANNEL_STATE_READY);
         //ARGB_LOC_ST = ARGB_READY;
 
-		manager.frame_buffer.is_sending = false;
-		manager.frame_buffer.is_rendered = false;
-				
-    }
+
+		buffer.is_sending = false;
+		buffer.is_rendered = false;
+	}
     htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
 }
 
@@ -297,13 +298,15 @@ inline void Setup()
 {
 	srand( Analog::mux.Get(10) * 10 );
 
-	manager.frame_buffer.Convertor = iterator1;
-	manager.SelectEffect(effect_game);
+	//manager.frame_buffer.Convertor = iterator1;
+	manager.SelectEffect(effect_primitive);
+
+	effect_primitive.DrawStop();
 
 
 
-		frame_buffer_ptr = manager.frame_buffer.raw;
-		frame_buffer_len = sizeof(manager.frame_buffer.raw);
+		frame_buffer_ptr = buffer.frame_buffer.raw;
+		frame_buffer_len = sizeof(buffer.frame_buffer.raw);
 
 
 	
@@ -356,14 +359,15 @@ inline void Loop(uint32_t &current_time)
 */
 
 	static uint32_t lasttime = 0;
-	if(manager.frame_buffer.is_sending == false && manager.frame_buffer.is_rendered == true)
+	if(buffer.is_sending == false && buffer.is_rendered == true)
 	{
-		manager.frame_buffer.is_sending = true;
+		buffer.is_sending = true;
 
 		DMADraw();
 
-		//Logger.Print("+SF-PXL=128,16,6144\r\n");
+		//Logger.Print("+PXL=128,16,6144,");
 		//Logger.Print(frame_buffer_ptr, frame_buffer_len, LOG_OUT_TYPE_BYTES);
+		//Logger.Print("\n");
 
 		DEBUG_LOG_TOPIC("DMADraw", "time: %d\n", (HAL_GetTick() - lasttime));
 		lasttime = HAL_GetTick();

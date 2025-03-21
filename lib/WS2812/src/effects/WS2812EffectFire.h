@@ -1,10 +1,12 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812Manager.h"
 #include "WS2812EffectInterface.h"
 
 class WS2812EffectFire : public WS2812EffectInterface
 {
+	static constexpr uint8_t width = FrameBuffer::frame_width;
+	static constexpr uint8_t height = FrameBuffer::frame_height;
+	
 	public:
 		
 		virtual void Init() override
@@ -30,13 +32,11 @@ class WS2812EffectFire : public WS2812EffectInterface
 		// Функция для обновления эффекта огня
 		void updateFireEffect()
 		{
-			static constexpr uint8_t width = _frame_buffer->width;
-			static constexpr uint8_t height = _frame_buffer->height;
 			static uint8_t firePixels[width * height] = {};
 			
 			uint16_t src, dst;
 			uint8_t decay, intensity;
-			WS2812Manager::color_t color;
+			color_t color;
 			
 			// Распространение огня вверх
 			for(uint8_t y = 0; y < height - 1; ++y)
@@ -78,8 +78,9 @@ class WS2812EffectFire : public WS2812EffectInterface
 					color.R = intensity;
 					color.B = 0;
 					
-					uint16_t index = _frame_buffer->Convertor(dst, width, height);
-					_frame_buffer->pixel[index] = color;
+					//uint16_t index = _frame_buffer->Convertor(dst, width, height);
+					//_frame_buffer->pixel[index] = color;
+					_frame_buffer->SetPixel(dst, color);
 				}
 			}
 		}

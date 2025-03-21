@@ -1,6 +1,5 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812Manager.h"
 #include "WS2812EffectInterface.h"
 
 /*
@@ -16,8 +15,8 @@
 
 class WS2812EffectTemplate : public WS2812EffectInterface
 {
-	static constexpr uint8_t width = WS2812Manager::frame_buffer_t::width;
-	static constexpr uint8_t height = WS2812Manager::frame_buffer_t::height;
+	static constexpr uint8_t width = FrameBuffer::frame_width;
+	static constexpr uint8_t height = FrameBuffer::frame_height;
 	
 	public:
 		

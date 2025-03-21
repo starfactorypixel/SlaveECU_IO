@@ -1,18 +1,22 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812ManagerInterface.h"
+#include "FrameBuffer.h"
 #include "WS2812EffectInterface.h"
 
-class WS2812Manager : public WS2812ManagerInterface
+class WS2812Manager
 {
-
 	public:
-
-		void SelectEffect(WS2812EffectInterface &effect)
+		
+		WS2812Manager(FrameBuffer &frame_buffer) : frame_buffer(&frame_buffer)
 		{
-
+			return;
+		}
+		
+		void SelectEffect(WS2812EffectInterface &effect, uint32_t frame_rate = 100)
+		{
 			_effect = &effect;
-			effect.PrepareInit(this, frame_buffer);
+			_frame_rate = frame_rate;
+			effect.PrepareInit(*frame_buffer);
 			effect.Init();
 		
 			return;
@@ -22,14 +26,14 @@ class WS2812Manager : public WS2812ManagerInterface
 		{
 			if(_effect == nullptr) return;
 
-			if(time - last_tick > 0)
+			if(time - last_tick >= 5)
 			{
 				last_tick = time;
 				
 				_effect->Tick(time);
 			}
 			
-			if(frame_buffer.is_sending == false && time - last_render >= DISPLAY_FRAME_RATE)
+			if(frame_buffer->is_sending == false && time - last_render >= _frame_rate)
 			{
 				last_render = time;
 				
@@ -39,12 +43,13 @@ class WS2812Manager : public WS2812ManagerInterface
 			return;
 		}
 		
-		frame_buffer_t frame_buffer = {};
+		FrameBuffer *frame_buffer;
 		
 	private:
 		
 		WS2812EffectInterface *_effect = nullptr;
+		uint32_t _frame_rate;
 		uint32_t last_tick = 0;
 		uint32_t last_render = 0;
-
+		
 };

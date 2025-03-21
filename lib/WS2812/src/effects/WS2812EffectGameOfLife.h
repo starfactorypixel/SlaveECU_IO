@@ -1,12 +1,11 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812Manager.h"
 #include "WS2812EffectInterface.h"
 
 class WS2812EffectGameOfLife : public WS2812EffectInterface
 {
-	static constexpr uint8_t width = WS2812Manager::frame_buffer_t::width;
-	static constexpr uint8_t height = WS2812Manager::frame_buffer_t::height;
+	static constexpr uint8_t width = FrameBuffer::frame_width;
+	static constexpr uint8_t height = FrameBuffer::frame_height;
 	
 	public:
 		
@@ -75,20 +74,21 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 		void _drawGeneration()
 		{
 			uint16_t index_2d, index_1d;
-			WS2812Manager::color_t color;
+			color_t color;
 			for(uint8_t y = 0; y < height; y++)
 			{
 				for(uint8_t x = 0; x < width; x++)
 				{
 					index_2d = x + (y * width);
-					index_1d = _frame_buffer->Convertor(index_2d, width, height);
+					//index_1d = _frame_buffer->Convertor(index_2d, width, height);
 					
 					if(_getBit(_current_generation, index_2d))
 						color = {0x10, 0x00, 0x00};
 					else
 						color = {0x00, 0x00, 0x00};
 					
-					_frame_buffer->pixel[index_1d] = color;
+					//_frame_buffer->pixel[index_1d] = color;
+					_frame_buffer->SetPixel(index_2d, color);
 				}
 			}
 

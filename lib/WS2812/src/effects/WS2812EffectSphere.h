@@ -1,6 +1,5 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812Manager.h"
 #include "WS2812EffectInterface.h"
 
 class WS2812EffectSphere : public WS2812EffectInterface
@@ -62,12 +61,12 @@ class WS2812EffectSphere : public WS2812EffectInterface
 				ball->x += ball->vx;
 				ball->y += ball->vy;
 				
-				if(ball->x - ball->radius < 0 || ball->x + ball->radius >= _frame_buffer->width)
+				if(ball->x - ball->radius < 0 || ball->x + ball->radius >= _frame_buffer->frame_width)
 				{
 					ball->vx *= -1;
 					ball->x += ball->vx;
 				}
-				if(ball->y - ball->radius < 0 || ball->y + ball->radius >= _frame_buffer->height) {
+				if(ball->y - ball->radius < 0 || ball->y + ball->radius >= _frame_buffer->frame_height) {
 					ball->vy *= -1;
 					ball->y += ball->vy;
 				}
@@ -84,10 +83,11 @@ class WS2812EffectSphere : public WS2812EffectInterface
 		
 		void render()
 		{
-			memset_dma32(_frame_buffer->raw, 0x00000000, sizeof(_frame_buffer->raw));
+			//memset_dma32(_frame_buffer->raw, 0x00000000, sizeof(_frame_buffer->raw));
+			_frame_buffer->Clear();
 			
-			static constexpr uint8_t width = _frame_buffer->width;
-			static constexpr uint8_t height = _frame_buffer->height;
+			static constexpr uint8_t width = _frame_buffer->frame_width;
+			static constexpr uint8_t height = _frame_buffer->frame_height;
 			Ball *ball = nullptr;
 			for(uint8_t i = 0; i < _count; ++i)
 			{
@@ -101,8 +101,10 @@ class WS2812EffectSphere : public WS2812EffectInterface
 						int py = (int)(ball->y) + dy;
 						if(px >= 0 && px < width && py >= 0 && py < height && dx * dx + dy * dy <= ball->radius * ball->radius)
 						{
-							uint16_t index = _frame_buffer->Convertor( (py * width + px), width, height);
-							_frame_buffer->pixel[index] = {ball->g, ball->r, ball->b};
+							//uint16_t index = _frame_buffer->Convertor( (py * width + px), width, height);
+							//_frame_buffer->pixel[index] = {ball->g, ball->r, ball->b};
+							color_t pixel = {ball->g, ball->r, ball->b};
+							_frame_buffer->SetPixel((py * width + px), pixel);
 						}
 					}
 				}
