@@ -30,8 +30,6 @@ class FrameBufferInterface
 
 class FrameBuffer
 {
-	using FuncPtr = uint16_t (FrameBuffer::*)(uint16_t);
-
 	public:
 		
 #if not DISPLAY_WIDTH > 0 or not DISPLAY_HEIGHT > 0
@@ -47,20 +45,7 @@ class FrameBuffer
 #else
 		#error You must specify 'DISPLAY_PIXEL_TYPE' before including 'FrameBuffer.h'
 #endif
-
-#if DISPLAY_TYPE == 1
-		FuncPtr Mapper = &FrameBuffer::_Mapper0;
-#elif DISPLAY_TYPE == 2
-		FuncPtr Mapper = &FrameBuffer::_Mapper1;
-#elif DISPLAY_TYPE == 3
-		FuncPtr Mapper = &FrameBuffer::_Mapper2;
-#else
-		#error You must specify 'DISPLAY_TYPE' before including 'FrameBuffer.h'
-#endif
-
-
-
-
+		
 		struct __attribute__((aligned(4))) frame_buffer_t
 		{
 			union __attribute__((aligned(4)))
@@ -78,13 +63,48 @@ class FrameBuffer
 		static constexpr uint8_t frame_width = DISPLAY_WIDTH;	// Ширина кадра
 		static constexpr uint8_t frame_height = DISPLAY_HEIGHT;	// Высота кадра
 		frame_buffer_t frame_buffer;							// Массив пикселей и байт
+		
+		
+		
+		FrameBuffer() : _Mapper(&FrameBuffer::_Mapper0), _brightness(255)
+		{}
+		
+		void SetMapper(uint8_t id)
+		{
+			switch(id)
+			{
+				case 0:  { _Mapper = &FrameBuffer::_Mapper0; break; }
+				case 1:  { _Mapper = &FrameBuffer::_Mapper1; break; }
+				case 2:  { _Mapper = &FrameBuffer::_Mapper2; break; }
+				default: { _Mapper = &FrameBuffer::_Mapper0; break; }
+			}
+			
+			return;
+		}
+		
+		void SetBrightness(uint8_t brightness)
+		{
+			_brightness = brightness;
 
+			return;
+		}
+		
+		void Prepare()
+		{
+			if(_brightness < 255)
+			{
+				for(color_t &pixel : frame_buffer.pixel)
+				{
+					AdjustBrightness(pixel, _brightness);
+				}
+			}
 
-
-
+			return;
+		}
+		
 		inline void GetPixel(uint16_t idx, color_t &pixel, bool clear)
 		{
-			uint16_t index = (this->*Mapper)(idx);
+			uint16_t index = (this->*_Mapper)(idx);
 			pixel = frame_buffer.pixel[index];
 			if(clear == true)
 				frame_buffer.pixel[index] = {0x00, 0x00, 0x00};
@@ -94,7 +114,7 @@ class FrameBuffer
 		
 		inline void SetPixel(uint16_t idx, color_t &pixel)
 		{
-			uint16_t index = (this->*Mapper)(idx);
+			uint16_t index = (this->*_Mapper)(idx);
 			frame_buffer.pixel[index] = pixel;
 
 			return;
@@ -106,16 +126,28 @@ class FrameBuffer
 
 			return;
 		}
+		
+		void AdjustBrightness(color_t &color, uint8_t brightness)
+		{
+			color.R = (color.R * brightness) / 255;
+			color.G = (color.G * brightness) / 255;
+			color.B = (color.B * brightness) / 255;
+			
+			return;
+		}
 
 
 
 	private:
 		
+		/*
+			Конвертор - заглушка, оставляет индекс не тронутым
+		*/
 		uint16_t _Mapper0(uint16_t input)
 		{
 			return input;
 		}
-		
+
 		/*
 			Конвертор индексов 2D кадрового буфера в вертикальный зиг-заг, сверху-вниз, слево-направо (светодиодне панели)
 		*/
@@ -139,4 +171,9 @@ class FrameBuffer
 			
 			return index;
 		}
+		
+		
+		uint16_t (FrameBuffer::*_Mapper)(uint16_t);
+		uint8_t _brightness;
+		
 };

@@ -13,7 +13,6 @@
 #define DISPLAY_WIDTH		128		// переименовать в FRAME_ OR NOT?
 #define DISPLAY_HEIGHT		16
 #define DISPLAY_PIXEL_TYPE	2
-#define DISPLAY_TYPE		2
 #include <FrameBuffer.h>
 #include <WS2812Manager.h>
 #include <effects/WS2812EffectFire.h>
@@ -257,13 +256,15 @@ inline void Setup()
 	effect_primitive.DrawStop();
 
 
+	buffer.SetMapper(1);
+	buffer.SetBrightness(255);
 
-		frame_buffer_ptr = buffer.frame_buffer.raw;
-		frame_buffer_len = sizeof(buffer.frame_buffer.raw);
+	frame_buffer_ptr = buffer.frame_buffer.raw;
+	frame_buffer_len = sizeof(buffer.frame_buffer.raw);
 
 
 	
-		SetupHW();
+	SetupHW();
 
 
 	
@@ -332,7 +333,8 @@ inline void Loop(uint32_t &current_time)
 	if(buffer.is_sending == false && buffer.is_rendered == true)
 	{
 		buffer.is_sending = true;
-
+		
+		buffer.Prepare();
 		DMA_Start();
 
 		//Logger.Print("+PXL=128,16,6144,");
