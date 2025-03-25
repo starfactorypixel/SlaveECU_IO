@@ -71,188 +71,141 @@ namespace WS2812Logic
 
 
 
-static void RGB_TIM_DMADelayPulseCplt(DMA_HandleTypeDef *hdma);
-static void RGB_TIM_DMADelayPulseHalfCplt(DMA_HandleTypeDef *hdma);
+static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma);
+static void DMA_HalfCpltCallback(DMA_HandleTypeDef *hdma);
 
 
 
+uint16_t buff_copy_logic[][2] = {
+	{0, sizeof(dma_buffer)}, 
+	{0, (sizeof(dma_buffer) / 2)}, 
+	{(sizeof(dma_buffer) / 2), sizeof(dma_buffer)}
+};
 
-
-
-
-
-void DMADraw()
+void CreateDMABuffer(uint8_t mode)
 {
+	uint16_t start = buff_copy_logic[mode][0];
+	uint16_t end = buff_copy_logic[mode][1];
 
-	//frame_buffer_idx = 0;
-
-    //ARGB_LOC_ST = ARGB_BUSY;
-    if (frame_buffer_idx != 0 || DMA_HANDLE.State != HAL_DMA_STATE_READY) {
-        return;
-    } 
-		else {
-        for (volatile uint8_t i = 0; i < 8; i++) {
-            // set first transfer from first values
-            dma_buffer[i] = (((frame_buffer_ptr[0] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 8] = (((frame_buffer_ptr[1] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 16] = (((frame_buffer_ptr[2] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 24] = (((frame_buffer_ptr[3] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 32] = (((frame_buffer_ptr[4] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 40] = (((frame_buffer_ptr[5] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-					
-			dma_buffer[i + 48] = (((frame_buffer_ptr[6] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 56] = (((frame_buffer_ptr[7] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 64] = (((frame_buffer_ptr[8] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-			dma_buffer[i + 72] = (((frame_buffer_ptr[9] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 80] = (((frame_buffer_ptr[10] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 88] = (((frame_buffer_ptr[11] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-        }
-        HAL_StatusTypeDef DMA_Send_Stat = HAL_ERROR;
-        while (DMA_Send_Stat != HAL_OK) {
-            if (TIM_CHANNEL_STATE_GET(&TIM_HANDLE, TIM_CH) == HAL_TIM_CHANNEL_STATE_BUSY) {
-                DMA_Send_Stat = HAL_BUSY;
-                continue;
-            } else if (TIM_CHANNEL_STATE_GET(&TIM_HANDLE, TIM_CH) == HAL_TIM_CHANNEL_STATE_READY) {
-                TIM_CHANNEL_STATE_SET(&TIM_HANDLE, TIM_CH, HAL_TIM_CHANNEL_STATE_BUSY);
-            } else {
-                DMA_Send_Stat = HAL_ERROR;
-                continue;
-            }
-						// Callback
-            TIM_HANDLE.hdma[ARGB_TIM_DMA_ID]->XferCpltCallback = RGB_TIM_DMADelayPulseCplt;
-            TIM_HANDLE.hdma[ARGB_TIM_DMA_ID]->XferHalfCpltCallback = RGB_TIM_DMADelayPulseHalfCplt;
-            TIM_HANDLE.hdma[ARGB_TIM_DMA_ID]->XferErrorCallback = TIM_DMAError;
-						// DMA init
-            if (HAL_DMA_Start_IT(TIM_HANDLE.hdma[ARGB_TIM_DMA_ID], (uint32_t) dma_buffer,
-                                 (uint32_t) &TIM_HANDLE.Instance->ARGB_TIM_CCR,
-                                 (uint32_t) sizeof(dma_buffer)) != HAL_OK) {
-                DMA_Send_Stat = HAL_ERROR;
-                continue;
-            }
-            __HAL_TIM_ENABLE_DMA(&TIM_HANDLE, ARGB_TIM_DMA_CC);
-            if (IS_TIM_BREAK_INSTANCE(TIM_HANDLE.Instance) != RESET)
-                __HAL_TIM_MOE_ENABLE(&TIM_HANDLE);
-            if (IS_TIM_SLAVE_INSTANCE(TIM_HANDLE.Instance)) {
-                uint32_t tmpsmcr = TIM_HANDLE.Instance->SMCR & TIM_SMCR_SMS;
-                if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
-                    __HAL_TIM_ENABLE(&TIM_HANDLE);
-            } else
-                __HAL_TIM_ENABLE(&TIM_HANDLE);
-            DMA_Send_Stat = HAL_OK;
-        }
-        frame_buffer_idx = 12;
-        return;
-    }
+	uint8_t *frame_ptr = &frame_buffer_ptr[frame_buffer_idx];
+	uint8_t byte, mask;
+	
+	for(uint16_t i = start; i < end; i += 8)
+	{
+		byte = *frame_ptr++;
+		mask = 0x80;
+		
+		for(uint8_t b = 0; b < 8; ++b)
+		{
+			dma_buffer[i + b] = (byte & mask) ? PWM_HI : PWM_LO;
+			mask >>= 1;
+		}
+	}
+	frame_buffer_idx += (end - start) / 8;
 }
 
-static void RGB_TIM_DMADelayPulseHalfCplt(DMA_HandleTypeDef *hdma) {
 
-    TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *) ((DMA_HandleTypeDef *) hdma)->Parent;
-    // if wrong handlers
-    if (hdma != &DMA_HANDLE || htim != &TIM_HANDLE) return;
-    if (frame_buffer_idx == 0) return; // if no data to transmit - return
-    // if data transfer
-    if (frame_buffer_idx < frame_buffer_len) {
-        // fill first part of buffer
+
+void DMA_Start()
+{
+	if(frame_buffer_idx != 0) return;
+	if(DMA_HANDLE.State != HAL_DMA_STATE_READY) return;
+	
+	CreateDMABuffer(0);
+	
+	HAL_StatusTypeDef DMA_Send_Stat = HAL_ERROR;
+	do
+	{
+		if(TIM_CHANNEL_STATE_GET(&TIM_HANDLE, TIM_CH) == HAL_TIM_CHANNEL_STATE_BUSY)
+		{
+			DMA_Send_Stat = HAL_BUSY;
+		}
+		else if(TIM_CHANNEL_STATE_GET(&TIM_HANDLE, TIM_CH) == HAL_TIM_CHANNEL_STATE_READY)
+		{
+			TIM_CHANNEL_STATE_SET(&TIM_HANDLE, TIM_CH, HAL_TIM_CHANNEL_STATE_BUSY);
+		}
+		else
+		{
+			DMA_Send_Stat = HAL_ERROR;
+			break;
+		}
+		
+		TIM_HANDLE.hdma[ARGB_TIM_DMA_ID]->XferCpltCallback = DMA_FullCpltCallback;
+		TIM_HANDLE.hdma[ARGB_TIM_DMA_ID]->XferHalfCpltCallback = DMA_HalfCpltCallback;
+		TIM_HANDLE.hdma[ARGB_TIM_DMA_ID]->XferErrorCallback = TIM_DMAError;
+		DMA_Send_Stat = HAL_DMA_Start_IT(TIM_HANDLE.hdma[ARGB_TIM_DMA_ID], (uint32_t)dma_buffer, (uint32_t) &TIM_HANDLE.Instance->ARGB_TIM_CCR, sizeof(dma_buffer));
+		
+		if(DMA_Send_Stat == HAL_OK)
+		{
+			__HAL_TIM_ENABLE_DMA(&TIM_HANDLE, ARGB_TIM_DMA_CC);
 			
-
-        for (volatile uint8_t i = 0; i < 8; i++) {
-					
-            dma_buffer[i] = (((frame_buffer_ptr[frame_buffer_idx + 0] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 8] = (((frame_buffer_ptr[frame_buffer_idx + 1] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 16] = (((frame_buffer_ptr[frame_buffer_idx + 2] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-					
-            dma_buffer[i + 24] = (((frame_buffer_ptr[frame_buffer_idx + 3] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 32] = (((frame_buffer_ptr[frame_buffer_idx + 4] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 40] = (((frame_buffer_ptr[frame_buffer_idx + 5] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;		
-					
-        }
-        frame_buffer_idx += 6;			// old set ++
-    } else if (frame_buffer_idx < frame_buffer_len + 12) { // if RET transfer
-        memset((uint8_t *) &dma_buffer[0], 0, (sizeof(dma_buffer) / 2)); // first part
-        frame_buffer_idx += 6;			// old set ++
-    }
+			if(IS_TIM_BREAK_INSTANCE(TIM_HANDLE.Instance) != RESET)
+				__HAL_TIM_MOE_ENABLE(&TIM_HANDLE);
+			
+			if(IS_TIM_SLAVE_INSTANCE(TIM_HANDLE.Instance) != RESET && IS_TIM_SLAVEMODE_TRIGGER_ENABLED(TIM_HANDLE.Instance->SMCR & TIM_SMCR_SMS) == RESET)
+				__HAL_TIM_ENABLE(&TIM_HANDLE);
+			else
+				__HAL_TIM_ENABLE(&TIM_HANDLE);
+		}
+	} while(DMA_Send_Stat != HAL_OK);
+	
+	return;
 }
 
-static void RGB_TIM_DMADelayPulseCplt(DMA_HandleTypeDef *hdma) {
+static void DMA_HalfCpltCallback(DMA_HandleTypeDef *hdma)
+{
+	if(hdma != &DMA_HANDLE || hdma->Parent != &TIM_HANDLE) return;
+	if(frame_buffer_idx == 0) return;
 	
-    TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *) ((DMA_HandleTypeDef *) hdma)->Parent;
-    // if wrong handlers
-    if (hdma != &DMA_HANDLE || htim != &TIM_HANDLE) return;
-    if (frame_buffer_idx == 0) return; // if no data to transmit - return
+	if(frame_buffer_idx < frame_buffer_len)
+	{
+		CreateDMABuffer(1);
+	}
+	else if(frame_buffer_idx < frame_buffer_len + (sizeof(dma_buffer) / 8))
+	{
+		memset((uint8_t *) &dma_buffer[0], 0x00, (sizeof(dma_buffer) / 2));
+		frame_buffer_idx += (sizeof(dma_buffer) / 2 / 8);
+	}
+
+	return;
+}
+
+static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma)
+{
+	if(hdma != &DMA_HANDLE || hdma->Parent != &TIM_HANDLE) return;
+	if(frame_buffer_idx == 0) return;
 	
-
-    if (hdma == htim->hdma[TIM_DMA_ID_CC1]) {
-        htim->Channel = HAL_TIM_ACTIVE_CHANNEL_1;
-        if (hdma->Init.Mode == DMA_NORMAL) {
-            TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
-        }
-    } else if (hdma == htim->hdma[TIM_DMA_ID_CC2]) {
-        htim->Channel = HAL_TIM_ACTIVE_CHANNEL_2;
-        if (hdma->Init.Mode == DMA_NORMAL) {
-            TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
-        }
-    } else if (hdma == htim->hdma[TIM_DMA_ID_CC3]) {
-        htim->Channel = HAL_TIM_ACTIVE_CHANNEL_3;
-        if (hdma->Init.Mode == DMA_NORMAL) {
-            TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_3, HAL_TIM_CHANNEL_STATE_READY);
-        }
-    } else if (hdma == htim->hdma[TIM_DMA_ID_CC4]) {
-        htim->Channel = HAL_TIM_ACTIVE_CHANNEL_4;
-        if (hdma->Init.Mode == DMA_NORMAL) {
-            TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_4, HAL_TIM_CHANNEL_STATE_READY);
-        }
-    } else {
-        //nothing to do 
-    }
-
-
-// if data transfer
-    if (frame_buffer_idx < frame_buffer_len) {
-        // fill second part of buffer
-			
-
-        for (volatile uint8_t i = 0; i < 8; i++) {
-					
-            dma_buffer[i + 48] = (((frame_buffer_ptr[frame_buffer_idx + 0] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 56] = (((frame_buffer_ptr[frame_buffer_idx + 1] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 64] = (((frame_buffer_ptr[frame_buffer_idx + 2] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-					
-            dma_buffer[i + 72] = (((frame_buffer_ptr[frame_buffer_idx + 3] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 80] = (((frame_buffer_ptr[frame_buffer_idx + 4] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-            dma_buffer[i + 88] = (((frame_buffer_ptr[frame_buffer_idx + 5] << i) & 0x80) > 0) ? PWM_HI : PWM_LO;
-					
-					
-        }
-        frame_buffer_idx += 6;				// old set ++
-    } else if (frame_buffer_idx < frame_buffer_len + 12) { // if RET transfer
-        memset((uint8_t *) &dma_buffer[sizeof(dma_buffer) / 2], 0, (sizeof(dma_buffer) / 2)); // second part
-        frame_buffer_idx += 6;				// old set ++
-    } else { // if END of transfer
-			
-        frame_buffer_idx = 0;
-        // STOP DMA:
-
-
-        __HAL_TIM_DISABLE_DMA(htim, ARGB_TIM_DMA_CC);
-        (void) HAL_DMA_Abort_IT(htim->hdma[ARGB_TIM_DMA_ID]);
-
-
-        if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET) {
-            /* Disable the Main Output */
-            __HAL_TIM_MOE_DISABLE(htim);
-        }
-        /* Disable the Peripheral */
-        __HAL_TIM_DISABLE(htim);
-        /* Set the TIM channel state */
-        TIM_CHANNEL_STATE_SET(htim, TIM_CH, HAL_TIM_CHANNEL_STATE_READY);
-        //ARGB_LOC_ST = ARGB_READY;
-
-
+	//TIM_HANDLE.Channel = (HAL_TIM_ActiveChannel)TIM_CH;
+	TIM_CHANNEL_STATE_SET(&TIM_HANDLE, TIM_CH, HAL_TIM_CHANNEL_STATE_READY);
+	
+	if(frame_buffer_idx < frame_buffer_len)
+	{
+		CreateDMABuffer(2);
+	}
+	else if(frame_buffer_idx < frame_buffer_len + (sizeof(dma_buffer) / 8))
+	{
+		memset((uint8_t *) &dma_buffer[sizeof(dma_buffer) / 2], 0x00, (sizeof(dma_buffer) / 2));
+		frame_buffer_idx += (sizeof(dma_buffer) / 2 / 8);
+	}
+	else
+	{
+		frame_buffer_idx = 0;
+		
+		__HAL_TIM_DISABLE_DMA(&TIM_HANDLE, ARGB_TIM_DMA_CC);
+		(void) HAL_DMA_Abort_IT(TIM_HANDLE.hdma[ARGB_TIM_DMA_ID]);
+		
+		if(IS_TIM_BREAK_INSTANCE(TIM_HANDLE.Instance) != RESET)
+			__HAL_TIM_MOE_DISABLE(&TIM_HANDLE);
+		
+		__HAL_TIM_DISABLE(&TIM_HANDLE);
+		TIM_CHANNEL_STATE_SET(&TIM_HANDLE, TIM_CH, HAL_TIM_CHANNEL_STATE_READY);
+		
 		buffer.is_sending = false;
 		buffer.is_rendered = false;
 	}
-    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
+	//TIM_HANDLE.Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
+	
+	return;
 }
 
 
@@ -324,19 +277,36 @@ inline void Loop(uint32_t &current_time)
 
 	static uint8_t idx = 0;
 	static uint32_t tick = 0;
-	if(current_time - tick > (30 * 1000))
+	static uint32_t tick_time = 0;
+	if(current_time - tick > tick_time)
 	{
 		tick = current_time;
 
 		if(idx == 0)
 		{
-			//manager.SelectEffect(effect_fire);
+			manager.SelectEffect(effect_fire);
+			tick_time = 60000;
 			idx = 1;
 		}
 		
 		else if(idx == 1)
 		{
-			//manager.SelectEffect(effect_sphere);
+			manager.SelectEffect(effect_sphere);
+			tick_time = 30000;
+			idx = 2;
+		}
+
+		else if(idx == 2)
+		{
+			manager.SelectEffect(effect_game);
+			tick_time = 60000;
+			idx = 3;
+		}
+
+		else if(idx == 3)
+		{
+			manager.SelectEffect(effect_primitive);
+			tick_time = 15000;
 			idx = 0;
 		}
 
@@ -363,7 +333,7 @@ inline void Loop(uint32_t &current_time)
 	{
 		buffer.is_sending = true;
 
-		DMADraw();
+		DMA_Start();
 
 		//Logger.Print("+PXL=128,16,6144,");
 		//Logger.Print(frame_buffer_ptr, frame_buffer_len, LOG_OUT_TYPE_BYTES);
@@ -392,7 +362,7 @@ inline void Loop(uint32_t &current_time)
 		
 		matrixObj.SetFrameDrawStart();
 		
-		DMADraw();
+		DMA_Start();
 		
 		//Serial::Print("+PXL=128,16,2\r\n");
 		//Serial::Print(frame_buffer_ptr, frame_buffer_len);
