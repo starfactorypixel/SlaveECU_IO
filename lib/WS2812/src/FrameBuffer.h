@@ -104,6 +104,8 @@ class FrameBuffer
 		
 		inline void GetPixel(uint16_t idx, color_t &pixel, bool clear)
 		{
+			if(idx >= sizeofarray(frame_buffer.pixel)) return;
+			
 			uint16_t index = (this->*_Mapper)(idx);
 			pixel = frame_buffer.pixel[index];
 			if(clear == true)
@@ -112,11 +114,37 @@ class FrameBuffer
 			return;
 		}
 		
-		inline void SetPixel(uint16_t idx, color_t &pixel)
+		inline void GetPixel(uint8_t x, uint8_t y, color_t &pixel, bool clear)
 		{
+			if(x >= frame_width || y >= frame_height) return;
+			
+			uint16_t idx = x + (y * frame_width);
+			uint16_t index = (this->*_Mapper)(idx);
+			pixel = frame_buffer.pixel[index];
+			if(clear == true)
+				frame_buffer.pixel[index] = {0x00, 0x00, 0x00};
+			
+			return;
+		}
+		
+		inline void SetPixel(uint16_t idx, const color_t &pixel)
+		{
+			if(idx >= sizeofarray(frame_buffer.pixel)) return;
+			
 			uint16_t index = (this->*_Mapper)(idx);
 			frame_buffer.pixel[index] = pixel;
-
+			
+			return;
+		}
+		
+		inline void SetPixel(uint8_t x, uint8_t y, const color_t &pixel)
+		{
+			if(x >= frame_width || y >= frame_height) return;
+			
+			uint16_t idx = x + (y * frame_width);
+			uint16_t index = (this->*_Mapper)(idx);
+			frame_buffer.pixel[index] = pixel;
+			
 			return;
 		}
 		
