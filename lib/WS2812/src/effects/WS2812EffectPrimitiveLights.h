@@ -2,21 +2,53 @@
 #include <inttypes.h>
 #include "WS2812EffectInterface.h"
 #include "PrimitiveDraw.h"
+#include "image.h"
+
+#include <PXLParser.h>
+#include <PXLReaderArray.h>
+#include <PXLReaderSPI.h>
+#include <PXLReaderUART.h>
 
 class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 {
 	static constexpr uint8_t width = FrameBuffer::frame_width;
 	static constexpr uint8_t height = FrameBuffer::frame_height;
+	
+	//PXLReaderArray reader;
+	//PXLReaderSPI reader;
+	PXLReaderUART reader;
+	//PXLParser pxl(width, height);
+	PXLParser pxl;
+	
 
 	public:
 
-		WS2812EffectPrimitiveLights(): _pd(width, height)
+		WS2812EffectPrimitiveLights(): _pd(width, height), pxl(width, height)
 		{
 
 		};
 
 		virtual void Init() override
 		{
+
+			
+			//reader.PutFileMap( {"dragon.pxl", dragon, sizeof(dragon)} );
+			//reader.PutFileMap( {"test.pxl", test, sizeof(test)} );
+/*
+			reader.PutFileMap( {"dragon1.pxl", 0x001000, 40754UL} );	// 4096UL
+			reader.PutFileMap( {"dragon2.pxl", 0x00B000, 42975UL} );	// 4096UL
+			reader.PutFileMap( {"dragon3.pxl", 0x020000, 40754UL} );	// 4096UL
+			reader.PutFileMap( {"dragon4.pxl", 0x030000, 38444UL} );	// 4096UL
+			reader.PutFileMap( {"dragon5.pxl", 0x03A000, 27714UL} );	// 4096UL
+*/			
+			pxl.SetReader(reader);
+			pxl.OpenFile("dragon5.pxl");
+			//pxl.OpenFile("test.pxl");
+
+
+
+
+
 			_pd.SetFrameBuffer(*_frame_buffer);
 			h = Random(0, 15);
 			
@@ -30,8 +62,65 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		
 		virtual void Render(uint32_t time) override
 		{
-			//memset_dma32(_frame_buffer->raw, 0x00000000, sizeof(_frame_buffer->raw));
+			_frame_buffer->Clear();
 
+
+			static int16_t x_offset = 0;
+
+			uint32_t lasttime = HAL_GetTick();
+
+			//pxl.GetAutoFrame(time, [&](file_pixel_t &pixel_data, uint8_t x, uint8_t y)
+			pxl.GetAutoFrame(time, [&](uint16_t index, uint8_t data[4])
+			{
+				if(data[3] < 255)
+					return;
+
+				//memcpy(_frame_buff + pixel_data.index, &pixel_data.color1, 3);
+				color_t &pixel = *(color_t *)data;
+				_frame_buffer->SetPixel(index, pixel);
+				//_frame_buffer->SetPixel(x + x_offset, y, pixel);
+			});
+
+			DEBUG_LOG_TOPIC("PXLDraw", "time: %d\n", (HAL_GetTick() - lasttime));
+
+			//if( (x_offset += 4) >= width ) x_offset = -36;
+
+
+
+
+
+
+
+
+
+
+
+// Дракон gif
+/*
+			static int16_t x_offset = 0;
+			static uint8_t frame_idx = 0;
+
+			FrameBuffer::color_t color;
+			//uint16_t index_2d;
+			for (uint8_t x = 0; x < 36; x++)
+			{
+				for (uint8_t y = 0; y < 16; y++)
+				{
+					//index_2d = x + (y * width) + x_offset;
+					const uint8_t *tmp = image_data[frame_idx][y][x];
+					color.G = tmp[0]; color.R = tmp[1]; color.B = tmp[2];
+					
+					_frame_buffer->SetPixel(x + x_offset, y, color);
+					
+				}
+				
+			}
+			if( ++frame_idx == (sizeof(image_data) / sizeof(image_data[0])) ) frame_idx = 0;
+			if( (x_offset += 4) >= width ) x_offset = -36;
+*/			
+
+
+/*
 			uint16_t src, dst;
 			uint8_t decay, intensity;
 			color_t color;
@@ -62,6 +151,7 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 			uint16_t idx = 127 + (h * width);
 			color = {0x00, 0x64, 0x00};
 			_frame_buffer->SetPixel(idx, color);
+*/
 
 /*
 			for(uint8_t y = 0; y < height; ++y)
@@ -128,5 +218,9 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		PrimitiveDraw _pd;
 
 		int8_t h;
+
+
+
+	
 		
 };

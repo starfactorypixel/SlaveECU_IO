@@ -83,7 +83,7 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 					//index_1d = _frame_buffer->Convertor(index_2d, width, height);
 					
 					if(_getBit(_current_generation, index_2d))
-						color = {0x10, 0x00, 0x00};
+						color = {0x00, 0x10, 0x00};
 					else
 						color = {0x00, 0x00, 0x00};
 					

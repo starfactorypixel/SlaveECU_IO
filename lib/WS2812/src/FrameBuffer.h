@@ -34,17 +34,9 @@ class FrameBuffer
 		
 #if not DISPLAY_WIDTH > 0 or not DISPLAY_HEIGHT > 0
 		#error You must specify 'DISPLAY_WIDTH' and 'DISPLAY_HEIGHT' before including 'FrameBuffer.h'
-#endif	
-
-#if DISPLAY_PIXEL_TYPE == 1
-		using color_t = FrameBufferInterface::color_rgb_t
-#elif DISPLAY_PIXEL_TYPE == 2
-		using color_t = FrameBufferInterface::color_grb_t;
-#elif DISPLAY_PIXEL_TYPE == 3
-		using color_t = FrameBufferInterface::color_bgr_t;
-#else
-		#error You must specify 'DISPLAY_PIXEL_TYPE' before including 'FrameBuffer.h'
 #endif
+		
+		using color_t = FrameBufferInterface::color_rgb_t;
 		
 		struct __attribute__((aligned(4))) frame_buffer_t
 		{
@@ -106,7 +98,8 @@ class FrameBuffer
 		{
 			if(idx >= sizeofarray(frame_buffer.pixel)) return;
 			
-			uint16_t index = (this->*_Mapper)(idx);
+			//uint16_t index = (this->*_Mapper)(idx);
+			uint16_t index = idx;
 			pixel = frame_buffer.pixel[index];
 			if(clear == true)
 				frame_buffer.pixel[index] = {0x00, 0x00, 0x00};
@@ -119,7 +112,8 @@ class FrameBuffer
 			if(x >= frame_width || y >= frame_height) return;
 			
 			uint16_t idx = x + (y * frame_width);
-			uint16_t index = (this->*_Mapper)(idx);
+			//uint16_t index = (this->*_Mapper)(idx);
+			uint16_t index = idx;
 			pixel = frame_buffer.pixel[index];
 			if(clear == true)
 				frame_buffer.pixel[index] = {0x00, 0x00, 0x00};
@@ -131,7 +125,8 @@ class FrameBuffer
 		{
 			if(idx >= sizeofarray(frame_buffer.pixel)) return;
 			
-			uint16_t index = (this->*_Mapper)(idx);
+			//uint16_t index = (this->*_Mapper)(idx);
+			uint16_t index = idx;
 			frame_buffer.pixel[index] = pixel;
 			
 			return;
@@ -142,7 +137,8 @@ class FrameBuffer
 			if(x >= frame_width || y >= frame_height) return;
 			
 			uint16_t idx = x + (y * frame_width);
-			uint16_t index = (this->*_Mapper)(idx);
+			//uint16_t index = (this->*_Mapper)(idx);
+			uint16_t index = idx;
 			frame_buffer.pixel[index] = pixel;
 			
 			return;

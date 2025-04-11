@@ -12,7 +12,6 @@
 
 #define DISPLAY_WIDTH		128		// переименовать в FRAME_ OR NOT?
 #define DISPLAY_HEIGHT		16
-#define DISPLAY_PIXEL_TYPE	2
 #include <FrameBuffer.h>
 #include <WS2812Manager.h>
 #include <effects/WS2812EffectFire.h>
@@ -66,32 +65,61 @@ namespace WS2812Logic
 
 
 
+	
 
+	static inline uint16_t fast_iterator(uint16_t input)
+	{
+		static uint16_t width = 128;
+		static uint16_t height = 16;
+		static uint8_t color_map[] = {1, 0, 2, 0};
 
+		uint16_t pixelIndex = input / 3;
+		uint16_t row = pixelIndex % height;
+		uint16_t col = pixelIndex / height;
 
+		uint16_t rowTransformed = (col & 1) ? (height - row - 1) : row;
+		uint16_t index = rowTransformed * width + col;
+
+		return (index * 3) + color_map[(input - pixelIndex * 3)];
+	}
+	
 
 static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma);
 static void DMA_HalfCpltCallback(DMA_HandleTypeDef *hdma);
 
 
 
-uint16_t buff_copy_logic[][2] = {
-	{0, sizeof(dma_buffer)}, 
-	{0, (sizeof(dma_buffer) / 2)}, 
-	{(sizeof(dma_buffer) / 2), sizeof(dma_buffer)}
-};
+
+
+/*
+58us	29us	Итератор тут
+60		30
+49us	25us	без иторетор , указатели
+52us	26us	без итератора, по массиву
+*/
 
 void CreateDMABuffer(uint8_t mode)
 {
+	Leds::obj.SetOn(Leds::LED_WHITE);
+	
+	static uint16_t buff_copy_logic[3][2] = 
+	{
+		{0, sizeof(dma_buffer)}, 
+		{0, (sizeof(dma_buffer) / 2)}, 
+		{(sizeof(dma_buffer) / 2), sizeof(dma_buffer)}
+	};	
 	uint16_t start = buff_copy_logic[mode][0];
 	uint16_t end = buff_copy_logic[mode][1];
-
-	uint8_t *frame_ptr = &frame_buffer_ptr[frame_buffer_idx];
+	
+	//uint8_t *frame_ptr = &frame_buffer_ptr[frame_buffer_idx];
 	uint8_t byte, mask;
+	uint16_t index;
 	
 	for(uint16_t i = start; i < end; i += 8)
 	{
-		byte = *frame_ptr++;
+		//byte = *frame_ptr++;
+		index = fast_iterator(frame_buffer_idx++);
+		byte = frame_buffer_ptr[index];
 		mask = 0x80;
 		
 		for(uint8_t b = 0; b < 8; ++b)
@@ -100,7 +128,9 @@ void CreateDMABuffer(uint8_t mode)
 			mask >>= 1;
 		}
 	}
-	frame_buffer_idx += (end - start) / 8;
+	//frame_buffer_idx += (end - start) / 8;
+	
+	Leds::obj.SetOff(Leds::LED_WHITE);
 }
 
 
@@ -251,13 +281,13 @@ inline void Setup()
 	srand( Analog::mux.Get(10) * 10 );
 
 	//manager.frame_buffer.Convertor = iterator1;
-	manager.SelectEffect(effect_primitive);
+	manager.SelectEffect(effect_primitive, 1000);
 
-	effect_primitive.DrawStop();
+	//effect_primitive.DrawStop();
 
 
 	buffer.SetMapper(1);
-	buffer.SetBrightness(255);
+	buffer.SetBrightness(16);
 
 	frame_buffer_ptr = buffer.frame_buffer.raw;
 	frame_buffer_len = sizeof(buffer.frame_buffer.raw);
@@ -282,7 +312,7 @@ inline void Loop(uint32_t &current_time)
 	if(current_time - tick > tick_time)
 	{
 		tick = current_time;
-
+/*
 		if(idx == 0)
 		{
 			manager.SelectEffect(effect_fire);
@@ -310,7 +340,7 @@ inline void Loop(uint32_t &current_time)
 			tick_time = 15000;
 			idx = 0;
 		}
-
+*/
 		
 	}
 

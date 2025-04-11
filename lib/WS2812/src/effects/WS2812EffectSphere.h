@@ -103,7 +103,7 @@ class WS2812EffectSphere : public WS2812EffectInterface
 						{
 							//uint16_t index = _frame_buffer->Convertor( (py * width + px), width, height);
 							//_frame_buffer->pixel[index] = {ball->g, ball->r, ball->b};
-							color_t pixel = {ball->g, ball->r, ball->b};
+							color_t pixel = {ball->r, ball->g, ball->b};
 							_frame_buffer->SetPixel((py * width + px), pixel);
 						}
 					}
