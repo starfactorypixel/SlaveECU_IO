@@ -5,6 +5,8 @@
 
 class WS2812Manager
 {
+	static constexpr uint32_t _tick_time = 5;
+	
 	public:
 		
 		WS2812Manager(FrameBuffer &frame_buffer) : frame_buffer(&frame_buffer)
@@ -26,7 +28,7 @@ class WS2812Manager
 		{
 			if(_effect == nullptr) return;
 
-			if(time - last_tick >= 5)
+			if(time - last_tick >= _tick_time)
 			{
 				last_tick = time;
 				

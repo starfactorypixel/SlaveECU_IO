@@ -40,7 +40,8 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 			reader.PutFileMap( {"dragon3.pxl", 0x020000, 40754UL} );	// 4096UL
 			reader.PutFileMap( {"dragon4.pxl", 0x030000, 38444UL} );	// 4096UL
 			reader.PutFileMap( {"dragon5.pxl", 0x03A000, 27714UL} );	// 4096UL
-*/			
+*/		
+			pxl.SetAutoReopen(true);
 			pxl.SetReader(reader);
 			pxl.OpenFile("dragon5.pxl");
 			//pxl.OpenFile("test.pxl");
@@ -57,6 +58,8 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		
 		virtual void Tick(uint32_t time) override
 		{
+			pxl.Tick(time);
+			
 			return;
 		}
 		
