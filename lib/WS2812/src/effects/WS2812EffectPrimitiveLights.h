@@ -15,15 +15,15 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 	static constexpr uint8_t height = FrameBuffer::frame_height;
 	
 	//PXLReaderArray reader;
-	PXLReaderSPI reader;
-	//PXLReaderUART reader;
+	//PXLReaderSPI reader;
+	PXLReaderUART reader;
 	//PXLParser pxl(width, height);
 	PXLParser pxl;
 	
 
 	public:
 
-		WS2812EffectPrimitiveLights(): _pd(width, height), pxl(width, height)
+		WS2812EffectPrimitiveLights() : pxl(width, height), _pd(width, height)
 		{
 
 		};
@@ -34,13 +34,13 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 			
 			//reader.PutFileMap( {"dragon.pxl", dragon, sizeof(dragon)} );
 			//reader.PutFileMap( {"test.pxl", test, sizeof(test)} );
-
+/*
 			reader.PutFileMap( {"dragon1.pxl", 0x001000, 40754UL} );	// 4096UL
 			reader.PutFileMap( {"dragon2.pxl", 0x00B000, 42975UL} );	// 4096UL
 			reader.PutFileMap( {"dragon3.pxl", 0x020000, 40754UL} );	// 4096UL
 			reader.PutFileMap( {"dragon4.pxl", 0x030000, 38444UL} );	// 4096UL
 			reader.PutFileMap( {"dragon5.pxl", 0x03A000, 27714UL} );	// 4096UL
-
+*/
 			pxl.SetAutoReopen(true);
 			pxl.SetReader(reader);
 			pxl.OpenFile("dragon5.pxl");
@@ -68,7 +68,7 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 			_frame_buffer->Clear();
 
 
-			static int16_t x_offset = 0;
+			//static int16_t x_offset = 0;
 
 			uint32_t lasttime = HAL_GetTick();
 

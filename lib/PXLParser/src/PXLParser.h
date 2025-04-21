@@ -134,11 +134,6 @@ class PXLParser
 				_file.isopen = true;
 				
 				_ParseFile();
-
-				#warning Добавить проверку, что если файл не открыть то нельзя получать кадлы в GetAutoFrame
-				// Есть запрос +PXLS=3,10,512 когда не получен ответ от +PXLS=3,0,10
-
-
 			}
 		}
 		else

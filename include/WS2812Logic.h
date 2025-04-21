@@ -304,14 +304,14 @@ uint32_t timer1, timer2, timer3, timer12, timer23;
 
 inline void Loop(uint32_t &current_time)
 {
-
+/*
 	static uint8_t idx = 0;
 	static uint32_t tick = 0;
 	static uint32_t tick_time = 0;
 	if(current_time - tick > tick_time)
 	{
 		tick = current_time;
-/*
+
 		if(idx == 0)
 		{
 			manager.SelectEffect(effect_fire);
@@ -339,10 +339,10 @@ inline void Loop(uint32_t &current_time)
 			tick_time = 15000;
 			idx = 0;
 		}
-*/
+
 		
 	}
-
+*/
 
 
 

@@ -20,7 +20,7 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 		{
 			return;
 		}
-		
+
 		virtual bool FramePrepare(uint32_t time) override
 		{
 			_updateGeneration();
@@ -71,21 +71,19 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 		
 		void _drawGeneration()
 		{
-			uint16_t index_2d, index_1d;
+			uint16_t index_2d;
 			color_t color;
 			for(uint8_t y = 0; y < height; y++)
 			{
 				for(uint8_t x = 0; x < width; x++)
 				{
 					index_2d = x + (y * width);
-					//index_1d = _frame_buffer->Convertor(index_2d, width, height);
 					
 					if(_getBit(_current_generation, index_2d))
 						color = {0x00, 0x10, 0x00};
 					else
 						color = {0x00, 0x00, 0x00};
 					
-					//_frame_buffer->pixel[index_1d] = color;
 					_frame_buffer->SetPixel(index_2d, color);
 				}
 			}

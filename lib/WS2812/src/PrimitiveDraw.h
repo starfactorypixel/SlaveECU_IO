@@ -77,15 +77,27 @@ class PrimitiveDraw
 					}
 				}
 			}
-			for (uint8_t t = 0; t < params.border_thickness; t++) {
-				line_params_t line = {params.x + t, params.y + t, params.x + params.w - t - 1, params.y + t, 1, params.border_color};
+			
+			line_params_t line;
+			line.thickness = 1;
+			line.color = params.border_color;
+			
+			for(uint8_t t = 0; t < params.border_thickness; t++)
+			{
+				line.x0 = params.x + t;
+				line.y0 = params.y + t;
+				line.x1 = params.x + params.w - t - 1;
+				line.y1 = params.y + t;
 				draw_line(line);
+				
 				line.x0 = params.x + params.w - t - 1; line.y0 = params.y + t;
 				line.x1 = params.x + params.w - t - 1; line.y1 = params.y + params.h - t - 1;
 				draw_line(line);
+				
 				line.x0 = params.x + params.w - t - 1; line.y0 = params.y + params.h - t - 1;
 				line.x1 = params.x + t; line.y1 = params.y + params.h - t - 1;
 				draw_line(line);
+				
 				line.x0 = params.x + t; line.y0 = params.y + params.h - t - 1;
 				line.x1 = params.x + t; line.y1 = params.y + t;
 				draw_line(line);
