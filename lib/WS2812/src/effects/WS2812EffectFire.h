@@ -19,12 +19,11 @@ class WS2812EffectFire : public WS2812EffectInterface
 			return;
 		}
 		
-		virtual void Render(uint32_t time) override
+		virtual bool FramePrepare(uint32_t time) override
 		{
 			updateFireEffect();
-			_frame_buffer->is_rendered = true;
 			
-			return;
+			return true;
 		}
 
 	private:
@@ -59,7 +58,7 @@ class WS2812EffectFire : public WS2812EffectInterface
 			{
 				dst = x + ((height - 1) * width);
 				
-				firePixels[dst] = (uint8_t)(PerlinNoiseFloat(x * 1.1, RandomFloat() * 10) * 255);	// x * 0.1
+				firePixels[dst] = (uint8_t)(ValueNoiseFloat(x * 1.1, RandomFloat() * 10) * 255);	// x * 0.1
 				//if(firePixels[dst] < 32) firePixels[dst] = 0;
 				
 				//firePixels[dst] = (uint8_t)(PerlinNoiseInt(x * 1, Random(0, 255) * 100) * 1);

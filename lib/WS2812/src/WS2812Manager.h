@@ -35,11 +35,22 @@ class WS2812Manager
 				_effect->Tick(time);
 			}
 			
-			if(frame_buffer->is_sending == false && time - last_render >= _frame_rate)
+			if(frame_buffer->is_sending == false)
 			{
-				last_render = time;
+				if(frame_buffer->is_rendered == false)
+				{
+					uint32_t time_next_frame = time + (_frame_rate - (time - last_render));
+					
+					frame_buffer->is_rendered = _effect->FramePrepare(time_next_frame);
+				}
 				
-				_effect->Render(time);
+				if(frame_buffer->is_rendered == true && time - last_render >= _frame_rate)
+				{
+					last_render = time;
+					
+					frame_buffer->is_ready_sending = true;
+					frame_buffer->is_rendered = false;
+				}
 			}
 			
 			return;

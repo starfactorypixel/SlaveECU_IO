@@ -50,8 +50,9 @@ class FrameBuffer
 			};
 		};
 		
-		volatile bool is_sending = false;						// Флаг выполнения отправки данных на экран
-		volatile bool is_rendered = false;						// Флаг готовности буфера к отправкe
+		volatile bool is_sending = false;						// Флаг активной отправки данных на экран
+		volatile bool is_ready_sending = false;					// Флаг готовности отправки данных на экран
+		volatile bool is_rendered = false;						// Флаг готовности кадра
 		static constexpr uint8_t frame_width = DISPLAY_WIDTH;	// Ширина кадра
 		static constexpr uint8_t frame_height = DISPLAY_HEIGHT;	// Высота кадра
 		frame_buffer_t frame_buffer;							// Массив пикселей и байт

@@ -15,9 +15,17 @@ class WS2812EffectInterface
 			return;
 		};
 
+		// Вызывается один раз в момент инициализации объекта
 		virtual void Init() = 0;
+
+		// Вызывается каждые 5 мс (по мере возможности)
+		// uint32_t time - Текущее время
 		virtual void Tick(uint32_t time) = 0;
-		virtual void Render(uint32_t time) = 0;
+
+		// Вызывается 1 и более раз, когда нужно начинать готовить следующий кадр
+		// uint32_t time - Расчитанное время следующего кадра
+		// return - true если кадр готов, false если не готов.
+		virtual bool FramePrepare(uint32_t time) = 0;
 		
 	protected:
 		
@@ -25,16 +33,16 @@ class WS2812EffectInterface
 		int32_t Random(int32_t min, int32_t max) { return (rand() % (max - min + 1)) + min; }
 		float RandomFloat(){ return (float)rand() / (float)RAND_MAX; }
 		
-		// Простая 2D версия шума Перлина (упрощенная для МК)
-		uint8_t PerlinNoiseInt(int32_t x, int32_t y)
+		// Простая 2D версия шума (упрощенная для МК)
+		uint8_t ValueNoiseInt(int32_t x, int32_t y)
 		{
 			int32_t n = x + y * 57;
 			n = (n << 13) ^ n;
 			return (uint8_t)(0 + (((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) >> 23));
 		}
 		
-		// Простая 2D версия шума Перлина (упрощенная для МК)
-		float PerlinNoiseFloat(float x, float y)
+		// Простая 2D версия шума (упрощенная для МК)
+		float ValueNoiseFloat(float x, float y)
 		{
 			uint32_t n = (int)x + ((int)y * 57);
 			n = (n << 13) ^ n;

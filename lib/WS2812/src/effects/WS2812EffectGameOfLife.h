@@ -21,14 +21,12 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 			return;
 		}
 		
-		virtual void Render(uint32_t time) override
+		virtual bool FramePrepare(uint32_t time) override
 		{
 			_updateGeneration();
 			_drawGeneration();
 			
-			_frame_buffer->is_rendered = true;
-			
-			return;
+			return true;
 		}
 		
 	private:
