@@ -142,6 +142,8 @@ inline uint8_t parser_dummy(const uint8_t *input, pxl_pixel_t &curr)
 	return 0;
 }
 
+// Формат RGB, разностное сжатие с индексом, 4 бит/цвет формат: FIIIIIII IIIIIIII RRRRGGGG BBBBxxxx
+// Индекс в несжатом виде не должен взводить старший бит, т.е. должен быть < 32768
 inline uint8_t parser_dummy_3(const uint8_t *input, pxl_pixel_t &curr)
 {
 	curr.index = (input[0] << 8) | input[1];
@@ -167,6 +169,8 @@ inline uint8_t parser_dummy_3(const uint8_t *input, pxl_pixel_t &curr)
 	}
 }
 
+// Формат RGBA, разностное сжатие с индексом, 4 бит/цвет формат: FIIIIIII IIIIIIII RRRRGGGG BBBBAAAA
+// Индекс в несжатом виде не должен взводить старший бит, т.е. должен быть < 32768
 inline uint8_t parser_dummy_4(const uint8_t *input, pxl_pixel_t &curr)
 {
 	curr.index = (input[0] << 8) | input[1];
@@ -192,7 +196,7 @@ inline uint8_t parser_dummy_4(const uint8_t *input, pxl_pixel_t &curr)
 	}
 }
 
-// Формат RGB, сжатие без индекса, 5 бит/цвет формат: FRRRRRGG GGGBBBBB
+// Формат RGB, разностное сжатие без индекса, 5 бит/цвет формат: FRRRRRGG GGGBBBBB
 // Индекс в несжатом виде не должен взводить старший бит, т.е. должен быть < 32768
 inline uint8_t parser_pack3_v2(const uint8_t *input, pxl_pixel_t &curr)
 {
@@ -218,7 +222,7 @@ inline uint8_t parser_pack3_v2(const uint8_t *input, pxl_pixel_t &curr)
 	}
 }
 
-// Формат RGBA, сжатие без индекса, 4 бит/цвет формат: FRRRRGGG GBBBBAAA
+// Формат RGBA, разностное сжатие без индекса, 4 бит/цвет формат: FRRRRGGG GBBBBAAA
 // Индекс в несжатом виде не должен взводить старший бит, т.е. должен быть < 32768
 inline uint8_t parser_pack4_v2(const uint8_t *input, pxl_pixel_t &curr)
 {
@@ -226,7 +230,7 @@ inline uint8_t parser_pack4_v2(const uint8_t *input, pxl_pixel_t &curr)
 	{
 		curr.index += 1;
 		curr.color[0] += (int8_t)((input[0] >> 3) & 0x0F) - 7;
-		curr.color[1] += (int8_t)(((input[0] << 1) & 0x0E) | (input[1] & 0x01)) - 7;
+		curr.color[1] += (int8_t)(((input[0] << 1) & 0x0E) | ((input[1] >> 7) & 0x01)) - 7;
 		curr.color[2] += (int8_t)((input[1] >> 3) & 0x0F) - 7;
 		curr.color[3] += (int8_t)(input[1] & 0x07) - 3;
 		
