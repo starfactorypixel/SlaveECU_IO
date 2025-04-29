@@ -280,13 +280,14 @@ inline void Setup()
 	srand( Analog::mux.Get(10) * 10 );
 
 	//manager.frame_buffer.Convertor = iterator1;
-	manager.SelectEffect(effect_primitive, 100);
+	manager.SelectEffect(effect_fire, 100);
 
 	//effect_primitive.DrawStop();
 
 
 	buffer.SetMapper(1);
-	buffer.SetBrightness(16);
+	//buffer.SetBrightness(16);
+	#warning fire not show when SetBrightness(16);
 
 	frame_buffer_ptr = buffer.frame_buffer.raw;
 	frame_buffer_len = sizeof(buffer.frame_buffer.raw);
