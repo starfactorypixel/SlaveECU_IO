@@ -71,10 +71,10 @@ class WS2812EffectFire : public WS2812EffectInterface
 				for(uint8_t x = 0; x < width; ++x)
 				{
 					dst = x + (y * width);
-					intensity = firePixels[dst] / 16;
+					intensity = firePixels[dst];
 
-					color.G = intensity / 5;/*(intensity > 128) ? (255 - intensity) * 2 : intensity / 2;*/
 					color.R = intensity;
+					color.G = intensity / 8;/*(intensity > 128) ? (255 - intensity) * 2 : intensity / 2;*/
 					color.B = 0;
 					
 					//uint16_t index = _frame_buffer->Convertor(dst, width, height);

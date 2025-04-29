@@ -286,8 +286,7 @@ inline void Setup()
 
 
 	buffer.SetMapper(1);
-	//buffer.SetBrightness(16);
-	#warning fire not show when SetBrightness(16);
+	buffer.SetBrightness(16);
 
 	frame_buffer_ptr = buffer.frame_buffer.raw;
 	frame_buffer_len = sizeof(buffer.frame_buffer.raw);
