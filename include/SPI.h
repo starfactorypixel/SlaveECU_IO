@@ -39,26 +39,14 @@ namespace SPI
 	}
 	
 	
-	
-	SPIManager<4> manager(SPI_Config, SPI_Write, SPI_Read, SPI_WriteRead);
+	SPIManager<3> manager(SPI_Config, SPI_Write, SPI_Read, SPI_WriteRead);
 	SPI_ZD25Q80B flash({GPIOB, GPIO_PIN_12}, SPI_BAUDRATEPRESCALER_2);
 	SPI_CAT25080 eeprom({GPIOA, GPIO_PIN_8}, SPI_BAUDRATEPRESCALER_8);
 	SPI_HC595<1> hc595({GPIOB, GPIO_PIN_8}, {GPIOB, GPIO_PIN_3}, {GPIOB, GPIO_PIN_2}, SPI_BAUDRATEPRESCALER_8);
-
-	/*
-	#define COMPILE_TIME_SIZEOF(t)      template<int s> struct SIZEOF_ ## t ## _IS; \
-										struct foo { \
-											int a,b; \
-										}; \
-										SIZEOF_ ## t ## _IS<sizeof(t)> SIZEOF_ ## t ## _IS;
-
-	COMPILE_TIME_SIZEOF(EasyPin);
-	*/
-
-
-
-
-	void Logic() {
+	
+	
+	void Logic()
+	{
 		uint8_t data[256];
 		uint32_t address = 0x123456;
 
