@@ -229,7 +229,7 @@ static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma)
 		__HAL_TIM_DISABLE(&TIM_HANDLE);
 		TIM_CHANNEL_STATE_SET(&TIM_HANDLE, TIM_CH, HAL_TIM_CHANNEL_STATE_READY);
 		
-		buffer.is_sending = false;
+		buffer.DrawEnding();
 	}
 	//TIM_HANDLE.Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
 	
@@ -359,12 +359,9 @@ inline void Loop(uint32_t &current_time)
 */
 
 	static uint32_t lasttime = 0;
-	if(buffer.is_sending == false && buffer.is_ready_sending == true)
+	if(buffer.DrawIsReady() == true)
 	{
-		buffer.is_ready_sending = false;
-		buffer.is_sending = true;
-		
-		buffer.Prepare();
+		buffer.DrawBegin();
 		DMA_Start();
 
 		//Logger.Print("+PXL=128,16,6144,");

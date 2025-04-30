@@ -2,41 +2,21 @@
 #include <inttypes.h>
 #include "FastString.h"
 
-class FrameBufferInterface
-{
-	public:
-		
-		struct __attribute__((__packed__)) color_rgb_t
-		{
-			uint8_t R;
-			uint8_t G;
-			uint8_t B;
-		};
-
-		struct __attribute__((__packed__)) color_grb_t
-		{
-			uint8_t G;
-			uint8_t R;
-			uint8_t B;
-		};
-
-		struct __attribute__((__packed__)) color_bgr_t
-		{
-			uint8_t B;
-			uint8_t G;
-			uint8_t R;
-		};
-};
-
 class FrameBuffer
 {
+
+#if not DISPLAY_WIDTH > 0 or not DISPLAY_HEIGHT > 0
+	#error You must specify 'DISPLAY_WIDTH' and 'DISPLAY_HEIGHT' before including 'FrameBuffer.h'
+#endif
+	
 	public:
 		
-#if not DISPLAY_WIDTH > 0 or not DISPLAY_HEIGHT > 0
-		#error You must specify 'DISPLAY_WIDTH' and 'DISPLAY_HEIGHT' before including 'FrameBuffer.h'
-#endif
-		
-		using color_t = FrameBufferInterface::color_rgb_t;
+		struct __attribute__((__packed__)) color_t
+		{
+			uint8_t R;
+			uint8_t G;
+			uint8_t B;
+		};
 		
 		struct __attribute__((aligned(4))) frame_buffer_t
 		{
@@ -58,9 +38,33 @@ class FrameBuffer
 		frame_buffer_t frame_buffer;							// Массив пикселей и байт
 		
 		
-		
 		FrameBuffer() : _Mapper(&FrameBuffer::_Mapper0), _brightness(255)
 		{}
+		
+		
+		// Возвращает true когда кадр готов к отрисовки
+		bool DrawIsReady()
+		{
+			return (is_sending == false && is_ready_sending == true);
+		}
+		
+		// Подготавливает кадр и блокирует работу на момент отрисовки
+		void DrawBegin()
+		{
+			is_sending = true;
+			is_ready_sending = false;
+			Prepare();
+			
+			return;
+		}
+		
+		// Снимает блокировку на момент отрисовки
+		void DrawEnding()
+		{
+			is_sending = false;
+
+			return;
+		}
 		
 		void SetMapper(uint8_t id)
 		{
@@ -95,57 +99,49 @@ class FrameBuffer
 			return;
 		}
 		
-		inline void GetPixel(uint16_t idx, color_t &pixel, bool clear)
+		void GetPixel(uint16_t idx, color_t &pixel, bool clear)
 		{
 			if(idx >= sizeofarray(frame_buffer.pixel)) return;
-			
-			//uint16_t index = (this->*_Mapper)(idx);
-			uint16_t index = idx;
-			pixel = frame_buffer.pixel[index];
+
+			pixel = frame_buffer.pixel[idx];
 			if(clear == true)
-				frame_buffer.pixel[index] = {0x00, 0x00, 0x00};
+				frame_buffer.pixel[idx] = {0x00, 0x00, 0x00};
 			
 			return;
 		}
 		
-		inline void GetPixel(uint8_t x, uint8_t y, color_t &pixel, bool clear)
+		void GetPixel(uint8_t x, uint8_t y, color_t &pixel, bool clear)
+		{
+			if(x >= frame_width || y >= frame_height) return;
+
+			uint16_t idx = x + (y * frame_width);
+			pixel = frame_buffer.pixel[idx];
+			if(clear == true)
+				frame_buffer.pixel[idx] = {0x00, 0x00, 0x00};
+			
+			return;
+		}
+		
+		void SetPixel(uint16_t idx, const color_t &pixel)
+		{
+			if(idx >= sizeofarray(frame_buffer.pixel)) return;
+
+			frame_buffer.pixel[idx] = pixel;
+
+			return;
+		}
+		
+		void SetPixel(uint8_t x, uint8_t y, const color_t &pixel)
 		{
 			if(x >= frame_width || y >= frame_height) return;
 			
 			uint16_t idx = x + (y * frame_width);
-			//uint16_t index = (this->*_Mapper)(idx);
-			uint16_t index = idx;
-			pixel = frame_buffer.pixel[index];
-			if(clear == true)
-				frame_buffer.pixel[index] = {0x00, 0x00, 0x00};
+			frame_buffer.pixel[idx] = pixel;
 			
 			return;
 		}
 		
-		inline void SetPixel(uint16_t idx, const color_t &pixel)
-		{
-			if(idx >= sizeofarray(frame_buffer.pixel)) return;
-			
-			//uint16_t index = (this->*_Mapper)(idx);
-			uint16_t index = idx;
-			frame_buffer.pixel[index] = pixel;
-			
-			return;
-		}
-		
-		inline void SetPixel(uint8_t x, uint8_t y, const color_t &pixel)
-		{
-			if(x >= frame_width || y >= frame_height) return;
-			
-			uint16_t idx = x + (y * frame_width);
-			//uint16_t index = (this->*_Mapper)(idx);
-			uint16_t index = idx;
-			frame_buffer.pixel[index] = pixel;
-			
-			return;
-		}
-		
-		inline void Clear()
+		void Clear()
 		{
 			memset_dma32(frame_buffer.raw, 0x00000000, sizeof(frame_buffer.raw));
 
@@ -154,15 +150,15 @@ class FrameBuffer
 		
 		void AdjustBrightness(color_t &color, uint8_t brightness)
 		{
+			if( (*(uint32_t*)&color & 0x00FFFFFF) == 0 ) return;
+
 			color.R = (color.R * brightness) / 255;
 			color.G = (color.G * brightness) / 255;
 			color.B = (color.B * brightness) / 255;
 			
 			return;
 		}
-
-
-
+		
 	private:
 		
 		/*
