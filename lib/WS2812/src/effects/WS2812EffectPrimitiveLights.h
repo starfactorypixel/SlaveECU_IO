@@ -41,6 +41,7 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 			reader.PutFileMap( {"dragon4.pxl", 0x030000, 38444UL} );	// 4096UL
 			reader.PutFileMap( {"dragon5.pxl", 0x03A000, 27714UL} );	// 4096UL
 */
+			pxl.SetIgnoreFrameTimeout(true);
 			pxl.SetAutoReopen(true);
 			pxl.SetReader(reader);
 			pxl.OpenFile("dragon5.pxl");
@@ -72,6 +73,8 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 
 			uint32_t lasttime = HAL_GetTick();
 
+			Leds::obj.SetOn(Leds::LED_WHITE);
+
 			//pxl.GetAutoFrame(time, [&](file_pixel_t &pixel_data, uint8_t x, uint8_t y)
 			pxl.GetAutoFrame(time, [&](uint16_t index, uint8_t data[4])
 			{
@@ -83,6 +86,8 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 				_frame_buffer->SetPixel(index, pixel);
 				//_frame_buffer->SetPixel(x + x_offset, y, pixel);
 			});
+
+			Leds::obj.SetOff(Leds::LED_WHITE);
 
 			DEBUG_LOG_TOPIC("PXLDraw", "time: %d\n", (HAL_GetTick() - lasttime));
 
