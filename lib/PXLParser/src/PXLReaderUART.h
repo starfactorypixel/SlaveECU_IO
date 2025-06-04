@@ -7,7 +7,7 @@ extern UART_HandleTypeDef hDebugUart;
 
 class PXLReaderUART : public PXLReaderInterface
 {
-	static constexpr uint16_t _max_data_request = 512;
+	static constexpr uint16_t _max_data_request = 1024;
 	
 	typedef struct
 	{
@@ -22,11 +22,6 @@ class PXLReaderUART : public PXLReaderInterface
 		virtual int8_t Open(const char *filename) override
 		{
 			_SendRequest('1', 0, 0);
-			//uint16_t length = generate_pxls_packet('1', 0, 0, _buffer_tx);
-			//_HW_Print(_buffer_tx, length);
-
-			//uint16_t rx_len;
-			//HAL_UARTEx_ReceiveToIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, 64);
 			bool status = _WaitResponse('2');
 			if(status == true)
 			{
@@ -39,11 +34,6 @@ class PXLReaderUART : public PXLReaderInterface
 		virtual int8_t Close() override
 		{
 			_SendRequest('5', 0, 0);
-			//uint16_t length = generate_pxls_packet('5', 0, 0, _buffer_tx);
-			//_HW_Print(_buffer_tx, length);
-
-			//uint16_t rx_len;
-			//HAL_UARTEx_ReceiveToIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, 64);
 			bool status = _WaitResponse('6');
 			if(status == true)
 			{
@@ -52,39 +42,28 @@ class PXLReaderUART : public PXLReaderInterface
 			
 			return -1;
 		}
-
-		uint32_t time[3];
 		
 		virtual uint16_t Read(const uint32_t offset, uint16_t length) override
 		{
 			if(length > _max_data_request)
 				length = _max_data_request;
-
-			time[0] = HAL_GetTick();
 			
-			_SendRequest('3', offset, length);
-			//uint16_t _buffer_tx_length = generate_pxls_packet('3', offset, length, _buffer_tx);
-			//_HW_Print(_buffer_tx, _buffer_tx_length);
-
-			time[1] = HAL_GetTick();
-
-			//uint16_t rx_len = 0;
-			//PXLS_Packet data = {};
-			//volatile HAL_StatusTypeDef wqe = HAL_UARTEx_ReceiveToIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, 64);
-			//bool status = parse_pxls_packet(_buffer_rx, rx_len, &data);
-			bool status = _WaitResponse('4');
-			if(status == true)
+			uint16_t result = 0;
+			uint8_t attempts = 0;
+			do
 			{
-				time[2] = HAL_GetTick();
-				DEBUG_LOG_TOPIC("UARTTX", "time: %d\n", (time[1] - time[0]));
-				DEBUG_LOG_TOPIC("UARTRX", "time: %d\n", (time[2] - time[1]));
-				
-				_buffer_rx_data_ptr = &_parsed_data.data[0];
+				_SendRequest('3', offset, length);
+				bool status = _WaitResponse('4', 100);
+				if(status == true && _parsed_data.offset == offset && _parsed_data.length <= length)
+				{
+					_buffer_rx_data_ptr = &_parsed_data.data[0];
+					result = _parsed_data.length;
 					
-				return _parsed_data.length;
-			}
+					break;
+				}
+			} while (++attempts < 3);
 			
-			return 0;
+			return result;
 		}
 		
 		virtual const uint8_t *GetBufferPtr() override
@@ -99,7 +78,7 @@ class PXLReaderUART : public PXLReaderInterface
 		void _HW_ReInit()
 		{
 			HAL_UART_DeInit(&hDebugUart);
-			hDebugUart.Init.BaudRate = 1000000UL;
+			hDebugUart.Init.BaudRate = 1500000UL;
 			if(HAL_UART_Init(&hDebugUart) != HAL_OK)
 			{
 				//Error_Handler();
@@ -127,14 +106,16 @@ class PXLReaderUART : public PXLReaderInterface
 			_HW_Print(_buffer_tx, buffer_tx_length);
 		}
 
-		bool _WaitResponse(char id)
+		bool _WaitResponse(char id, uint32_t timeout = 64)
 		{
 			uint16_t rx_len;
-			HAL_StatusTypeDef result = HAL_UARTEx_ReceiveToIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, 64);
+			NVIC_DisableIRQ(CAN1_RX1_IRQn);
+			HAL_StatusTypeDef result = HAL_UARTEx_ReceiveToIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, timeout);
+			NVIC_EnableIRQ(CAN1_RX1_IRQn);
 			if(result == HAL_OK)
 			{
-				bool status = parse_pxls_packet(_buffer_rx, rx_len, &_parsed_data);
-				if(status == true && _parsed_data.id == id)
+				uint8_t status = parse_pxls_packet(_buffer_rx, rx_len, &_parsed_data);
+				if(status == 0 && _parsed_data.id == id)
 				{
 					return true;
 				}
@@ -142,6 +123,10 @@ class PXLReaderUART : public PXLReaderInterface
 
 			return false;
 		}
+
+
+
+
 
 // Функция для конвертации uint32_t в ASCII без sprintf
 uint8_t *u32_to_ascii(uint32_t value, uint8_t *buf) {
@@ -203,36 +188,36 @@ uint8_t *ascii_to_u32(uint8_t *str, uint32_t* out) {
 
 
 
-		bool parse_pxls_packet(uint8_t *input, uint16_t len, PXLS_Packet *out)
+		uint8_t parse_pxls_packet(uint8_t *input, uint16_t len, PXLS_Packet *out)
 		{
 			if(len < 10 || input[0] != '+' || strncmp((const char *)input, "+PXLS=", 6) != 0)
-				return false;
+				return 1;
 			
 			uint8_t *ptr = input + 6;
 			
 			out->id = *ptr++;
 			if(*ptr++ != ',')
-				return false;
+				return 2;
 			
 			ptr = ascii_to_u32(ptr, &out->offset);
 			if(*ptr++ != ',')
-				return false;
+				return 3;
 			
 			ptr = ascii_to_u32(ptr, &out->length);
 			if(*ptr++ != '\n')
-				return false;
+				return 4;
 			
 			// Проверка длины и извлечение data
 			uint32_t expected_len = out->length;
 			uint16_t remaining = len - (ptr - input);
 			if(remaining < expected_len + 1) // +1 — это завершающий \n
-				return false;
+				return 5;
 			
 			out->data = (const uint8_t*)ptr;
 			if(ptr[expected_len] != '\n')
-				return false;
+				return 6;
 			
-			return true;
+			return 0;
 		}
 
 
