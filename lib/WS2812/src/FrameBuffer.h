@@ -121,7 +121,7 @@ class FrameBuffer
 			
 			return;
 		}
-		
+
 		void SetPixel(uint16_t idx, const color_t &pixel)
 		{
 			if(idx >= sizeofarray(frame_buffer.pixel)) return;
@@ -139,6 +139,23 @@ class FrameBuffer
 			frame_buffer.pixel[idx] = pixel;
 			
 			return;
+		}
+		
+		void SetPixel(uint16_t idx, const color_t &pixel, uint16_t count)
+		{
+			if(idx + count >= sizeofarray(frame_buffer.pixel)) return;
+			
+			memcpy_repeat_fast( (uint8_t *)&frame_buffer.pixel[idx], (uint8_t *)&pixel, sizeof(pixel), count );
+			
+			return;
+		}
+		
+		void SetPixel(uint8_t x, uint8_t y, const color_t &pixel, uint16_t count)
+		{
+			if(x >= frame_width || y >= frame_height) return;
+			
+			uint16_t idx = x + (y * frame_width);
+			return SetPixel(idx, pixel, count);
 		}
 		
 		void Clear()
@@ -193,7 +210,21 @@ class FrameBuffer
 			return index;
 		}
 		
-		
+		void memcpy_repeat_fast(uint8_t *dest, const uint8_t *src, size_t elem_size, size_t count)
+		{
+			memcpy(dest, src, elem_size);
+			
+			size_t total_copied = 1;
+			while(total_copied < count)
+			{
+				size_t copy_now = (count - total_copied) < total_copied ? (count - total_copied) : total_copied;
+				memcpy(dest + total_copied * elem_size, dest, copy_now * elem_size);
+				total_copied += copy_now;
+			}
+
+			return;
+		}
+
 		uint16_t (FrameBuffer::*_Mapper)(uint16_t);
 		uint8_t _brightness;
 		
