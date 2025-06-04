@@ -1,6 +1,7 @@
 #pragma once
 #include <inttypes.h>
 #include "WS2812EffectInterface.h"
+#include "CUtils_Perlin2DInt.h"
 
 class WS2812EffectFire : public WS2812EffectInterface
 {
@@ -52,18 +53,25 @@ class WS2812EffectFire : public WS2812EffectInterface
 					firePixels[dst] = (firePixels[src] > decay) ? firePixels[src] - decay : firePixels[src] / 2; // : 0
 				}
 			}
+
+			static int32_t y_offset = 0;
 			
 			// Генерация шума в нижней части буфера
 			for(uint8_t x = 0; x < width; ++x)
 			{
 				dst = x + ((height - 1) * width);
 				
-				firePixels[dst] = (uint8_t)(ValueNoiseFloat(x * 1.1, RandomFloat() * 10) * 255);	// x * 0.1
+				int16_t value = Perlin2DInt::noise2d(x * 64, y_offset/*Random(-255, 255)*/);
+				firePixels[dst] = (value + 1024) & 0xFF;
+				
+				//firePixels[dst] = (uint8_t)(ValueNoiseFloat(x * 1.1, RandomFloat() * 10) * 255);	// x * 0.1
 				//if(firePixels[dst] < 32) firePixels[dst] = 0;
 				
 				//firePixels[dst] = (uint8_t)(PerlinNoiseInt(x * 1, Random(0, 255) * 100) * 1);
 				//if(firePixels[dst] < 128) firePixels[dst] = 0;
 			}
+
+			y_offset += 32;
 			
 			// Преобразование в RGB буфер
 			for(uint8_t y = 0; y < height; ++y)
