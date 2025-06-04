@@ -48,7 +48,7 @@ namespace WS2812Logic
 	uint8_t *frame_buffer_ptr;
 	uint16_t frame_buffer_len;
 	volatile uint16_t frame_buffer_idx = 0;
-	volatile uint8_t dma_buffer[ (8 * 3 * 4) ];		// 8 бит * 3 цвета * 4 пикселя.
+	volatile uint8_t dma_buffer[ (8 * 3 * 6) ];		// 8 бит * 3 цвета * 6 пикселя.
 	
 
 
@@ -66,7 +66,11 @@ namespace WS2812Logic
 
 
 	
-
+	static inline uint16_t fast_iterator_raw(uint16_t input)
+	{
+		return input;
+	}
+	
 	static inline uint16_t fast_iterator(uint16_t input)
 	{
 		static uint16_t width = 128;
@@ -74,14 +78,56 @@ namespace WS2812Logic
 		static uint8_t color_map[] = {1, 0, 2, 0};
 
 		uint16_t pixelIndex = input / 3;
-		uint16_t row = pixelIndex % height;
-		uint16_t col = pixelIndex / height;
+		uint16_t row = pixelIndex % height;		// Номер пикселя в зиг-заге
+		uint16_t col = pixelIndex / height;		// Номер столбца зиг-зага
 
 		uint16_t rowTransformed = (col & 1) ? (height - row - 1) : row;
 		uint16_t index = rowTransformed * width + col;
 
 		return (index * 3) + color_map[(input - pixelIndex * 3)];
 	}
+
+	static inline uint16_t fast_iterator2(uint16_t input)
+	{
+		static const uint16_t width = 64;
+		static const uint16_t height = 32;
+		static const uint16_t block_height = 16;
+		static const uint8_t color_map[] = {1, 0, 2, 0}; // RGB → GRB
+	
+		uint16_t pixelIndex = input / 3;
+	
+		// Используем оригинальную схему: идём по столбцам
+		uint16_t row = pixelIndex % block_height;     // позиция по вертикали (0..47)
+		uint16_t col = pixelIndex / block_height;     // номер столбца (0..63)
+	
+		// Разбиваем по блокам (0..2), каждый по 16 строк
+		uint16_t block = pixelIndex / (width * block_height);
+	
+		// Зигзаг по строкам внутри блока: вверх или вниз
+		uint16_t rowTransformed = (col & 1)
+			? (block_height - 1 - row)
+			: row;
+	
+		// Абсолютная строка после зигзага
+		uint16_t transformed_row = block * (width * block_height) + rowTransformed;
+	
+		uint16_t index = transformed_row * width + col;
+	
+		return (index * 3) + color_map[input - pixelIndex * 3];
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+	typedef uint16_t (*idx_mapper_ptr)(uint16_t idx);
+	idx_mapper_ptr idx_mapper = fast_iterator_raw;
 	
 
 static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma);
@@ -100,7 +146,7 @@ static void DMA_HalfCpltCallback(DMA_HandleTypeDef *hdma);
 
 void CreateDMABuffer(uint8_t mode)
 {
-	Leds::obj.SetOn(Leds::LED_WHITE);
+	//Leds::obj.SetOn(Leds::LED_WHITE);
 	
 	static uint16_t buff_copy_logic[3][2] = 
 	{
@@ -118,7 +164,7 @@ void CreateDMABuffer(uint8_t mode)
 	for(uint16_t i = start; i < end; i += 8)
 	{
 		//byte = *frame_ptr++;
-		index = fast_iterator(frame_buffer_idx++);
+		index = idx_mapper(frame_buffer_idx++);
 		byte = frame_buffer_ptr[index];
 		mask = 0x80;
 		
@@ -130,7 +176,7 @@ void CreateDMABuffer(uint8_t mode)
 	}
 	//frame_buffer_idx += (end - start) / 8;
 	
-	Leds::obj.SetOff(Leds::LED_WHITE);
+	//Leds::obj.SetOff(Leds::LED_WHITE);
 }
 
 
@@ -247,31 +293,6 @@ static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma)
 
 
 
-/*
-	Конвертор индексов 2D кадрового буфера в вертикальный зиг-заг, сверху-вниз, слево-направо (светодиодне панели)
-*/
-uint16_t iterator1(uint16_t input, uint8_t width = 128, uint8_t height = 16)
-{
-	uint8_t row = input / width;
-	uint8_t col = input % width;
-	uint16_t index = col * height + (col % 2 == 0 ? row : (height - row - 1));
-	
-	return index;
-}
-
-/*
-	Конвертор индексов 2D кадрового буфера в горизонтальный зиг-заг, слево-направо, сверху-вниз (светодиодне ленты)
-*/
-uint16_t iterator2(uint16_t input, uint8_t width = 128, uint8_t height = 16)
-{
-	uint8_t row = input / width;
-	uint8_t col = input % width;
-	uint16_t index = row * width + (row % 2 == 0 ? col : (width - col - 1));
-	
-	return index;
-}
-
-
 
 
 
@@ -279,8 +300,10 @@ inline void Setup()
 {
 	srand( Analog::mux.Get(10) * 10 );
 
+	idx_mapper = fast_iterator;
+
 	//manager.frame_buffer.Convertor = iterator1;
-	manager.SelectEffect(effect_fire, 100);
+	manager.SelectEffect(effect_primitive, 100);
 
 	//effect_primitive.DrawStop();
 
