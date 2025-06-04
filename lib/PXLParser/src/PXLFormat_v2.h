@@ -124,6 +124,7 @@ struct __attribute__((packed)) file_pixel_raw_t
 struct pxl_pixel_t
 {
 	uint16_t index;
+	uint16_t repeat;
 	uint8_t color[4];
 };
 
@@ -133,18 +134,41 @@ struct file_pixel_type_t
 {
 	uint8_t size_pixel;			// Общее кол-во байт в пикселе (максимальное)
 	uint8_t size_pack;			// Общее кол-во байт в пикселе (упакованное)
-	uint8_t pack_alg;			// Алгоритм упаковки
 	color_parser_t Parser;		// Парсер цвета
 };
 
 inline uint8_t parser_dummy(const uint8_t *input, pxl_pixel_t &curr)
 {
-	return 0;
+	return 1;
+}
+
+// 
+inline uint8_t parser_dummy_3(const uint8_t *input, pxl_pixel_t &curr)
+{
+	curr.index = (input[0] << 8) | input[1];
+	curr.color[0] = input[2];
+	curr.color[1] = input[3];
+	curr.color[2] = input[4];
+	curr.color[3] = 0xFF;
+	
+	return 5;
+}
+
+// 
+inline uint8_t parser_dummy_4(const uint8_t *input, pxl_pixel_t &curr)
+{
+	curr.index = (input[0] << 8) | input[1];
+	curr.color[0] = input[2];
+	curr.color[1] = input[3];
+	curr.color[2] = input[4];
+	curr.color[3] = input[5];
+	
+	return 6;
 }
 
 // Формат RGB, разностное сжатие с индексом, 4 бит/цвет формат: FIIIIIII IIIIIIII RRRRGGGG BBBBxxxx
 // Индекс в несжатом виде не должен взводить старший бит, т.е. должен быть < 32768
-inline uint8_t parser_dummy_3(const uint8_t *input, pxl_pixel_t &curr)
+inline uint8_t parser_pack3_v1(const uint8_t *input, pxl_pixel_t &curr)
 {
 	curr.index = (input[0] << 8) | input[1];
 	
@@ -163,7 +187,7 @@ inline uint8_t parser_dummy_3(const uint8_t *input, pxl_pixel_t &curr)
 		curr.color[0] = input[2];
 		curr.color[1] = input[3];
 		curr.color[2] = input[4];
-		curr.color[3] = 255;
+		curr.color[3] = 0xFF;
 		
 		return 5;
 	}
@@ -171,7 +195,7 @@ inline uint8_t parser_dummy_3(const uint8_t *input, pxl_pixel_t &curr)
 
 // Формат RGBA, разностное сжатие с индексом, 4 бит/цвет формат: FIIIIIII IIIIIIII RRRRGGGG BBBBAAAA
 // Индекс в несжатом виде не должен взводить старший бит, т.е. должен быть < 32768
-inline uint8_t parser_dummy_4(const uint8_t *input, pxl_pixel_t &curr)
+inline uint8_t parser_pack4_v1(const uint8_t *input, pxl_pixel_t &curr)
 {
 	curr.index = (input[0] << 8) | input[1];
 
@@ -216,7 +240,7 @@ inline uint8_t parser_pack3_v2(const uint8_t *input, pxl_pixel_t &curr)
 		curr.color[0] = input[2];
 		curr.color[1] = input[3];
 		curr.color[2] = input[4];
-		curr.color[3] = 255;
+		curr.color[3] = 0xFF;
 		
 		return 5;
 	}
@@ -248,24 +272,75 @@ inline uint8_t parser_pack4_v2(const uint8_t *input, pxl_pixel_t &curr)
 	}
 }
 
+// Формат RGB555, сжатие с потерями, 5 бит/цвет формат: FRRRRRGG GGGBBBBB
+// Индекса нет, все пиксели последовательно.
+// Если F = 1, то ипользуется сжатия повторения, формат: FMNNNNNN
+// Если M = 0, то в N указано на сколько нужно пропустить индексов
+inline uint8_t parser_rgb5_pack(const uint8_t *input, pxl_pixel_t &curr)
+{
+	static const uint8_t expand5to8[32] = 
+	{
+		0x00, 0x08, 0x10, 0x18, 0x21, 0x29, 0x31, 0x39, 
+		0x42, 0x4A, 0x52, 0x5A, 0x63, 0x6B, 0x73, 0x7B, 
+		0x84, 0x8C, 0x94, 0x9C, 0xA5, 0xAD, 0xB5, 0xBD, 
+		0xC6, 0xCE, 0xD6, 0xDE, 0xE7, 0xEF, 0xF7, 0xFF, 
+	};
+	
+	// Присутствует флаг сжатия
+	if(input[0] & 0x80)
+	{
+		uint8_t count = (input[0] & 0x3F) + 1;
+		
+		// Сжатие одинаковых пикселей
+		if(input[0] & 0x40)
+		{
+			curr.index += 1;
+			curr.repeat = count;
+			// Не реализовано
+		}
+
+		// Сжатие пропуска пикселей
+		else
+		{
+			curr.index += count;
+			curr.color[3] = 0x00;		// Делаем 100% прозрачности но сам пиксель сохраняет цвет
+		}
+		
+		return 1;
+	}
+
+	// Простые, несжатые пиксели в формате RGB555
+	else
+	{
+		curr.index += 1;
+		curr.color[0] = expand5to8[ ((input[0] >> 2) & 0x1F) ];
+		curr.color[1] = expand5to8[ (((input[0] << 3) & 0x18) | ((input[1] >> 5) & 0x07)) ];
+		curr.color[2] = expand5to8[ (input[1] & 0x1F) ];
+		curr.color[3] = 0xFF;
+
+		return 2;
+	}
+}
+
+#warning format 0,1 - new func parser_dummy_3. 6,7 - pack1,2
 file_pixel_type_t file_pixel_type[] = 
 {
-	{ (2 + 3), (2 + 3), 0, parser_dummy_3 },	// RGB
-	{ (2 + 4), (2 + 4), 0, parser_dummy_4 },	// RGBA
-	{ (2 + 4), (2 + 4), 0, parser_dummy },		// GRBA
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (2 + 3), (2 + 2), 1, parser_dummy_3 },	// RGB + сжатие с индексом, 4 бит/цвет
-	{ (2 + 4), (2 + 2), 1, parser_dummy_4 },	// RGBA + сжатие с индексом, 4 бит/цвет
-	{ (2 + 3), (2),     2, parser_pack3_v2 },	// RGB + сжатие без индекса, 5 бит/цвет
-	{ (2 + 4), (2),     2, parser_pack4_v2 },	// RGBA + сжатие без индекса, 5 бит/цвет
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (0),     (0),     0, parser_dummy },		// ---
-	{ (0),     (0),     0, parser_dummy },		// ---
+	{ (2 + 3), (2 + 3), parser_dummy_3 },	// RGB
+	{ (2 + 4), (2 + 4), parser_dummy_4 },	// RGBA
+	{ (2 + 4), (2 + 4), parser_dummy },		// GRBA									// удалить
+	{ (0),     (0),     parser_dummy },		// ---
+	{ (0),     (0),     parser_dummy },		// ---
+	{ (2 + 3), (2 + 2), parser_pack3_v1 },	// RGB + сжатие с индексом, 4 бит/цвет
+	{ (2 + 4), (2 + 2), parser_pack4_v1 },	// RGBA + сжатие с индексом, 4 бит/цвет
+	{ (2 + 3), (2),     parser_pack3_v2 },	// RGB + сжатие без индекса, 5 бит/цвет
+	{ (2 + 4), (2),     parser_pack4_v2 },	// RGBA + сжатие без индекса, 5 бит/цвет
+	{ (0),     (0),     parser_dummy },		// ---
+	{ (0),     (0),     parser_dummy },		// ---
+	{ (0),     (0),     parser_dummy },		// ---
+	{ (0),     (0),     parser_dummy },		// ---
+	{ (0),     (0),     parser_dummy },		// ---
+	{ (2),     (1),     parser_rgb5_pack },	// RGB555
+	{ (0),     (0),     parser_dummy },		// ---
 };
 
 
