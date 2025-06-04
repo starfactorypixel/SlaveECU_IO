@@ -34,17 +34,18 @@ class PXLParser
 	//typedef std::function<void(file_pixel_t &pixel_data, uint8_t x, uint8_t y)> pixel_callback_t;
 	typedef std::function<void(uint16_t index, uint8_t data[4])> pixel_callback_t;
 
-	enum error_t : uint8_t
+	enum error_t : int8_t
 	{
-		ERROR_OK,
-		ERROR_INVALID_FILE,
-		ERROR_VERSION,
-		ERROR_SIZE,
-		ERROR_FORMAT,
-		ERROR_NOFRAMES,
-		ERROR_OPEN_FILE,
-		ERROR_READ_ZERO,
-		ERROR_IDX_OVERFLOW
+		ERROR_OK = 0,
+		ERROR_INVALID_FILE = -1,
+		ERROR_VERSION = -2,
+		ERROR_SIZE = -3,
+		ERROR_FORMAT = -4,
+		ERROR_NOFRAMES = -5,
+		ERROR_OPEN_FILE = -6,
+		ERROR_READ1_ZERO = 1,
+		ERROR_READ2_ZERO = 2,
+		ERROR_IDX_OVERFLOW = 3,
 	};
 
 
@@ -183,7 +184,7 @@ class PXLParser
 		if(_file.isopen == false)
 			return false;
 		
-		if(_error != ERROR_OK)
+		if(_error < ERROR_OK)
 			return false;
 
 		// Если пришло время рисовать следующий кадр.
@@ -261,9 +262,7 @@ class PXLParser
 		// не прочитали, уходим
 		if(read == 0)
 		{
-			_SetError(ERROR_READ_ZERO);
-			_ParsingFailed();
-
+			_ParsingFailed(ERROR_READ1_ZERO);
 			return false;
 		}
 
@@ -293,9 +292,8 @@ class PXLParser
 		// Кол-во обработанных байт
 		uint32_t bytes_processed = _frame_header_size_bytes;
 		
-		// Кол-во байт кадра, которое осталось загрузить, Максимально возможное
-		//uint32_t frame_bytes_left = (_header_frame.frame_pixels * _frame_pixel_size_bytes) - read;
-		uint32_t frame_bytes_left = frame_total_bytes - frame_loaded_bytes_raw;
+		// Кол-во байт, нуждающиеся в дозагрузке
+		uint32_t frame_bytes_offset = 0;
 
 
 
@@ -306,49 +304,52 @@ class PXLParser
 		//file_pixel_t *pixel_data_pointer = (file_pixel_t *)&buffer[_frame_header_size_bytes];
 		//uint8_t *pixel_data_pointer = (uint8_t *)&_file.buffer_ptr[_frame_header_size_bytes];
 		_file.buffer_ptr += _frame_header_size_bytes;
-
-
-
-		pxl_pixel_t curr_pixel;
-
+		
+		
+		// Инициализируем index с значением 0xFFFF, для того, чтобы когда появляется первый пиксель без индекса, там мы делаем index++ и попадаем в ячейку 0.
+		// Во всех остальных случаях формат гарантирует что первый пикель содержит индекс и значение index будет переписано
+		pxl_pixel_t curr_pixel = {};
+		curr_pixel.index = 0xFFFF;
+		curr_pixel.repeat = 1;
+		
 		for(uint16_t pixel_idx = 0; pixel_idx < _pxl.header_frame.frame_pixels; ++pixel_idx)
 		{
 			if(bytes_processed + _frame_pixel_size_bytes > frame_loaded_bytes_raw)
 			{
-				read = _reader->Read(_file.offset, frame_bytes_left);
+				frame_bytes_offset = ((_pxl.header_frame.frame_pixels - pixel_idx)) * _frame_pixel_size_bytes;
+				
+				read = _reader->Read(_file.offset, frame_bytes_offset);
 				if(read == 0)
 				{
-					_SetError(ERROR_READ_ZERO);
-					_ParsingFailed();
-
+					_ParsingFailed(ERROR_READ2_ZERO);
 					return false;
 				}
 				
 				frame_loaded_bytes_raw = bytes_processed + read;
 				
-				frame_bytes_left = ((_pxl.header_frame.frame_pixels - pixel_idx)) * _frame_pixel_size_bytes;
-				
-				//pixel_data_pointer = (uint8_t *)_reader->GetBufferPtr();
 				_file.buffer_ptr = _reader->GetBufferPtr();
 			}
 			
-
+			
 			uint8_t add_offset = _pxl.pixel_type.Parser( _file.buffer_ptr, curr_pixel );
 
 			if(curr_pixel.index >= (_cfg.width * _cfg.height))
 			{
-				_SetError(ERROR_IDX_OVERFLOW);
-				_ParsingFailed();
-
+				_ParsingFailed(ERROR_IDX_OVERFLOW);
 				return false;
 			}
-
 			
 
+			while( --curr_pixel.repeat )
+			{
+				callback(curr_pixel.index, curr_pixel.color);
+				++curr_pixel.index;
+			}
 			callback(curr_pixel.index, curr_pixel.color);
-
-
-
+			
+			curr_pixel.repeat = 1;
+			
+			
 			_file.buffer_ptr += add_offset;
 			_file.offset += add_offset;
 			bytes_processed += add_offset;
@@ -425,9 +426,20 @@ class PXLParser
 		}
 
 
-		void _ParsingFailed()
+		void _ParsingFailed(error_t error)
 		{
-			CloseFile();
+			_error = error;
+
+			DEBUG_LOG_TOPIC("Failed", "code: %d\n", error);
+
+			if(error == ERROR_READ1_ZERO && ++_file.read_attempts == 5)
+			{
+				_file.read_attempts = 0;
+
+				CloseFile();
+			}
+			
+			//CloseFile();
 /*			if(_cfg.reopen == true)
 			{
 				ReOpenFile();
@@ -464,6 +476,7 @@ class PXLParser
 
 			const char *filename = nullptr;			// Имя файла
 			bool isopen = false;					// Флаг открытого файла
+			uint8_t read_attempts = 0;				// Кол-во попыток чтения файла, после чего он закрывается
 		} _file;
 
 		struct cfg_t
