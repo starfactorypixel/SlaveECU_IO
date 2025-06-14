@@ -34,14 +34,14 @@ class PrimitiveDraw
 		
 		void SetFrameBuffer(FrameBuffer &frame_buffer)
 		{
-			_frame_buffer = &frame_buffer;
+			this->frame_buffer = &frame_buffer;
 			
 			return;
 		}
 		
 		void draw_line(line_params_t &params)
 		{
-			if(_frame_buffer == nullptr) return;
+			if(frame_buffer == nullptr) return;
 
 			int dx = abs(params.x1 - params.x0), sx = params.x0 < params.x1 ? 1 : -1;
 			int dy = abs(params.y1 - params.y0), sy = params.y0 < params.y1 ? 1 : -1;
@@ -52,7 +52,7 @@ class PrimitiveDraw
 					for (int j = -params.thickness / 2; j <= params.thickness / 2; j++) {
 						uint16_t idx = (y0 + j) * _frame_width + (x0 + i);
 						if (idx < _frame_width * _frame_height) {
-							_frame_buffer->SetPixel(idx, params.color);
+							frame_buffer->SetPixel(idx, params.color);
 						}
 					}
 				}
@@ -65,14 +65,14 @@ class PrimitiveDraw
 
 		void draw_rectangle(rectangle_params_t &params)
 		{
-			if(_frame_buffer == nullptr) return;
+			if(frame_buffer == nullptr) return;
 
 			if (params.filled) {
 				for (uint8_t i = 0; i < params.h; i++) {
 					for (uint8_t j = 0; j < params.w; j++) {
 						uint16_t idx = (params.y + i) * _frame_width + (params.x + j);
 						if (idx < _frame_width * _frame_height) {
-							_frame_buffer->SetPixel(idx, params.fill_color);
+							frame_buffer->SetPixel(idx, params.fill_color);
 						}
 					}
 				}
@@ -106,7 +106,7 @@ class PrimitiveDraw
 
 		void draw_circle(circle_params_t &params)
 		{
-			if(_frame_buffer == nullptr) return;
+			if(frame_buffer == nullptr) return;
 
 			for (int8_t y = -params.radius; y <= params.radius; y++) {
 				for (int8_t x = -params.radius; x <= params.radius; x++) {
@@ -115,7 +115,7 @@ class PrimitiveDraw
 						uint16_t idx = (params.cy + y) * _frame_width + (params.cx + x);
 						if (idx < _frame_width * _frame_height) {
 							if (params.filled || dist >= (params.radius - params.border_thickness) * (params.radius - params.border_thickness)) {
-								_frame_buffer->SetPixel(idx, (params.filled ? params.fill_color : params.border_color));
+								frame_buffer->SetPixel(idx, (params.filled ? params.fill_color : params.border_color));
 							}
 						}
 					}
@@ -125,7 +125,7 @@ class PrimitiveDraw
 
 	private:
 		
-		FrameBuffer *_frame_buffer = nullptr;
+		FrameBuffer *frame_buffer = nullptr;
 		const uint8_t _frame_width;
 		const uint8_t _frame_height;
 };

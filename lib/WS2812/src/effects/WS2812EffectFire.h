@@ -82,8 +82,8 @@ class WS2812EffectFire : public WS2812EffectInterface
 					color.G = intensity / 8;/*(intensity > 128) ? (255 - intensity) * 2 : intensity / 2;*/
 					color.B = 0;
 					
-					//uint16_t index = _frame_buffer->Convertor(dst, width, height);
-					//_frame_buffer->pixel[index] = color;
+					//uint16_t index = frame_buffer->Convertor(dst, width, height);
+					//frame_buffer->pixel[index] = color;
 					frame_buffer->SetPixel(dst, color);
 				}
 			}

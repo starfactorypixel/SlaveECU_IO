@@ -83,7 +83,7 @@ class WS2812EffectSphere : public WS2812EffectInterface
 		
 		void render()
 		{
-			//memset_dma32(_frame_buffer->raw, 0x00000000, sizeof(_frame_buffer->raw));
+			//memset_dma32(frame_buffer->raw, 0x00000000, sizeof(frame_buffer->raw));
 			frame_buffer->Clear();
 
 			Ball *ball = nullptr;
@@ -99,8 +99,8 @@ class WS2812EffectSphere : public WS2812EffectInterface
 						int py = (int)(ball->y) + dy;
 						if(px >= 0 && px < frame_width && py >= 0 && py < frame_height && dx * dx + dy * dy <= ball->radius * ball->radius)
 						{
-							//uint16_t index = _frame_buffer->Convertor( (py * width + px), width, height);
-							//_frame_buffer->pixel[index] = {ball->g, ball->r, ball->b};
+							//uint16_t index = frame_buffer->Convertor( (py * width + px), width, height);
+							//frame_buffer->pixel[index] = {ball->g, ball->r, ball->b};
 							color_t pixel = {ball->r, ball->g, ball->b};
 							frame_buffer->SetPixel((py * frame_width + px), pixel);
 						}
