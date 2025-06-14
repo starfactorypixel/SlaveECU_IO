@@ -38,7 +38,7 @@ class FrameBuffer
 		frame_buffer_t frame_buffer;							// Массив пикселей и байт
 		
 		
-		FrameBuffer() : _Mapper(&FrameBuffer::_Mapper0), _brightness(255)
+		FrameBuffer() : _brightness(255)
 		{}
 		
 		
@@ -65,20 +65,7 @@ class FrameBuffer
 
 			return;
 		}
-		
-		void SetMapper(uint8_t id)
-		{
-			switch(id)
-			{
-				case 0:  { _Mapper = &FrameBuffer::_Mapper0; break; }
-				case 1:  { _Mapper = &FrameBuffer::_Mapper1; break; }
-				case 2:  { _Mapper = &FrameBuffer::_Mapper2; break; }
-				default: { _Mapper = &FrameBuffer::_Mapper0; break; }
-			}
-			
-			return;
-		}
-		
+
 		void SetBrightness(uint8_t brightness)
 		{
 			_brightness = brightness;
@@ -178,38 +165,6 @@ class FrameBuffer
 		
 	private:
 		
-		/*
-			Конвертор - заглушка, оставляет индекс не тронутым
-		*/
-		uint16_t _Mapper0(uint16_t input)
-		{
-			return input;
-		}
-
-		/*
-			Конвертор индексов 2D кадрового буфера в вертикальный зиг-заг, сверху-вниз, слево-направо (светодиодне панели)
-		*/
-		uint16_t _Mapper1(uint16_t input)
-		{
-			uint8_t row = input / frame_width;
-			uint8_t col = input % frame_width;
-			uint16_t index = col * frame_height + (col % 2 == 0 ? row : (frame_height - row - 1));
-			
-			return index;
-		}
-
-		/*
-			Конвертор индексов 2D кадрового буфера в горизонтальный зиг-заг, слево-направо, сверху-вниз (светодиодне ленты)
-		*/
-		uint16_t _Mapper2(uint16_t input)
-		{
-			uint8_t row = input / frame_width;
-			uint8_t col = input % frame_width;
-			uint16_t index = row * frame_width + (row % 2 == 0 ? col : (frame_width - col - 1));
-			
-			return index;
-		}
-		
 		void memcpy_repeat_fast(uint8_t *dest, const uint8_t *src, size_t elem_size, size_t count)
 		{
 			memcpy(dest, src, elem_size);
@@ -224,8 +179,7 @@ class FrameBuffer
 
 			return;
 		}
-
-		uint16_t (FrameBuffer::*_Mapper)(uint16_t);
+		
 		uint8_t _brightness;
 		
 };

@@ -5,9 +5,6 @@
 
 class WS2812EffectFire : public WS2812EffectInterface
 {
-	static constexpr uint8_t width = FrameBuffer::frame_width;
-	static constexpr uint8_t height = FrameBuffer::frame_height;
-	
 	public:
 		
 		virtual void Init() override
@@ -32,22 +29,22 @@ class WS2812EffectFire : public WS2812EffectInterface
 		// Функция для обновления эффекта огня
 		void updateFireEffect()
 		{
-			static uint8_t firePixels[width * height] = {};
+			static uint8_t firePixels[frame_width * frame_height] = {};
 			
 			uint16_t src, dst;
 			uint8_t decay, intensity;
 			color_t color;
 			
 			// Распространение огня вверх
-			for(uint8_t y = 0; y < height - 1; ++y)
+			for(uint8_t y = 0; y < frame_height - 1; ++y)
 			{
-				for(uint8_t x = 0; x < width; ++x)
+				for(uint8_t x = 0; x < frame_width; ++x)
 				{
-					src = x + ((y + 1) * width);
-					dst = x + (y * width);
+					src = x + ((y + 1) * frame_width);
+					dst = x + (y * frame_width);
 					decay = rand() % 48;
 
-					if(x > 0 && x < width && firePixels[src] < 48)	// firePixels[src] < 48
+					if(x > 0 && x < frame_width && firePixels[src] < 48)	// firePixels[src] < 48
 						dst += Random(-1, 1);
 					
 					firePixels[dst] = (firePixels[src] > decay) ? firePixels[src] - decay : firePixels[src] / 2; // : 0
@@ -57,9 +54,9 @@ class WS2812EffectFire : public WS2812EffectInterface
 			static int32_t y_offset = 0;
 			
 			// Генерация шума в нижней части буфера
-			for(uint8_t x = 0; x < width; ++x)
+			for(uint8_t x = 0; x < frame_width; ++x)
 			{
-				dst = x + ((height - 1) * width);
+				dst = x + ((frame_height - 1) * frame_width);
 				
 				int16_t value = Perlin2DInt::noise2d(x * 64, y_offset/*Random(-255, 255)*/);
 				firePixels[dst] = (value + 1024) & 0xFF;
@@ -74,11 +71,11 @@ class WS2812EffectFire : public WS2812EffectInterface
 			y_offset += 32;
 			
 			// Преобразование в RGB буфер
-			for(uint8_t y = 0; y < height; ++y)
+			for(uint8_t y = 0; y < frame_height; ++y)
 			{
-				for(uint8_t x = 0; x < width; ++x)
+				for(uint8_t x = 0; x < frame_width; ++x)
 				{
-					dst = x + (y * width);
+					dst = x + (y * frame_width);
 					intensity = firePixels[dst];
 
 					color.R = intensity;
@@ -87,7 +84,7 @@ class WS2812EffectFire : public WS2812EffectInterface
 					
 					//uint16_t index = _frame_buffer->Convertor(dst, width, height);
 					//_frame_buffer->pixel[index] = color;
-					_frame_buffer->SetPixel(dst, color);
+					frame_buffer->SetPixel(dst, color);
 				}
 			}
 		}

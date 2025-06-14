@@ -4,9 +4,6 @@
 
 class WS2812EffectGameOfLife : public WS2812EffectInterface
 {
-	static constexpr uint8_t width = FrameBuffer::frame_width;
-	static constexpr uint8_t height = FrameBuffer::frame_height;
-	
 	public:
 		
 		virtual void Init() override
@@ -33,7 +30,7 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 		
 		void _initRandomGeneration()
 		{
-			for(uint16_t i = 0; i < width * height; i++)
+			for(uint16_t i = 0; i < frame_width * frame_height; i++)
 			{
 				_setBit(_current_generation, i, rand() % 3 == 0);
 			}
@@ -48,11 +45,11 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 			uint16_t index_2d;
 			uint8_t neighbors;
 			bool isAlive;
-			for(uint8_t y = 0; y < height; y++)
+			for(uint8_t y = 0; y < frame_height; y++)
 			{
-				for(uint8_t x = 0; x < width; x++)
+				for(uint8_t x = 0; x < frame_width; x++)
 				{
-					index_2d = x + (y * width);
+					index_2d = x + (y * frame_width);
 					neighbors = _countNeighbors(x, y);
 					isAlive = _getBit(_current_generation, index_2d);
 					
@@ -73,18 +70,18 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 		{
 			uint16_t index_2d;
 			color_t color;
-			for(uint8_t y = 0; y < height; y++)
+			for(uint8_t y = 0; y < frame_height; y++)
 			{
-				for(uint8_t x = 0; x < width; x++)
+				for(uint8_t x = 0; x < frame_width; x++)
 				{
-					index_2d = x + (y * width);
+					index_2d = x + (y * frame_width);
 					
 					if(_getBit(_current_generation, index_2d))
 						color = {0x00, 0x10, 0x00};
 					else
 						color = {0x00, 0x00, 0x00};
 					
-					_frame_buffer->SetPixel(index_2d, color);
+					frame_buffer->SetPixel(index_2d, color);
 				}
 			}
 
@@ -103,9 +100,9 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 				int16_t nx = x + offset[0];
 				int16_t ny = y + offset[1];
 				
-				if(nx >= 0 && nx < width && ny >= 0 && ny < height)
+				if(nx >= 0 && nx < frame_width && ny >= 0 && ny < frame_height)
 				{
-					uint16_t neighborIndex = ny * width + nx;
+					uint16_t neighborIndex = ny * frame_width + nx;
 					count += _getBit(_current_generation, neighborIndex);
 				}
 			}
@@ -134,7 +131,7 @@ class WS2812EffectGameOfLife : public WS2812EffectInterface
 			return (buffer[arrayPos] & (1 << bitPos)) != 0;
 		}
 		
-		uint8_t _current_generation[ (width * height + 7) / 8 ] = {0};
-		uint8_t _next_generation[ (width * height + 7) / 8 ] = {0};
+		uint8_t _current_generation[ (frame_width * frame_height + 7) / 8 ] = {0};
+		uint8_t _next_generation[ (frame_width * frame_height + 7) / 8 ] = {0};
 		
 };

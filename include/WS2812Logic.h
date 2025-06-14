@@ -10,14 +10,15 @@
 
 
 
-#define DISPLAY_WIDTH		128		// переименовать в FRAME_ OR NOT?
-#define DISPLAY_HEIGHT		16
+#define DISPLAY_WIDTH		64		// переименовать в FRAME_ OR NOT?
+#define DISPLAY_HEIGHT		48
 #include <FrameBuffer.h>
 #include <WS2812Manager.h>
 #include <effects/WS2812EffectFire.h>
 #include <effects/WS2812EffectSphere.h>
 #include <effects/WS2812EffectGameOfLife.h>
 #include <effects/WS2812EffectPrimitiveLights.h>
+#include <effects/WS2812EffectReader.h>
 
 //extern TIM_HandleTypeDef htim2;
 //extern DMA_HandleTypeDef hdma_tim2_ch1;
@@ -61,20 +62,23 @@ namespace WS2812Logic
 	WS2812EffectSphere effect_sphere;
 	WS2812EffectGameOfLife effect_game;
 	WS2812EffectPrimitiveLights effect_primitive;
+	WS2812EffectReader effect_reader;
 
 
-
-
-	
-	static inline uint16_t fast_iterator_raw(uint16_t input)
+	// Маппер без маппинга
+	static inline uint16_t mapper_0(uint16_t input)
 	{
 		return input;
 	}
 	
-	static inline uint16_t fast_iterator(uint16_t input)
+	// Маппер последовательной панели, Линейное подлючение, Один ряд
+	// +----+----+----+----+----+----+
+	// | 01 | 02 | 03 | 04 | 05 | XX |
+	// +----+----+----+----+----+----+	
+	static inline uint16_t mapper_1(uint16_t input)
 	{
-		static uint16_t width = 128;
-		static uint16_t height = 16;
+		static uint16_t width = DISPLAY_WIDTH;
+		static uint16_t height = DISPLAY_HEIGHT;
 		static uint8_t color_map[] = {1, 0, 2, 0};
 
 		uint16_t pixelIndex = input / 3;
@@ -87,39 +91,44 @@ namespace WS2812Logic
 		return (index * 3) + color_map[(input - pixelIndex * 3)];
 	}
 
-	static inline uint16_t fast_iterator2(uint16_t input)
+	// Маппер последовательной панели, Построчного подключения, Несколько рядов
+	// +----+----+----+----+
+	// | 01 | 02 | 03 | 04 |
+	// +----+----+----+----+
+	// | 05 | 06 | 07 | 08 |
+	// +----+----+----+----+
+	// | 09 | 10 | 11 | 12 |
+	// +----+----+----+----+
+	static inline uint16_t mapper_2(uint16_t input)
 	{
-		static const uint16_t width = 64;
-		static const uint16_t height = 32;
+		static const uint16_t width = DISPLAY_WIDTH;
+		static const uint16_t height = DISPLAY_HEIGHT;
 		static const uint16_t block_height = 16;
-		static const uint8_t color_map[] = {1, 0, 2, 0}; // RGB → GRB
-	
+		static const uint8_t color_map[] = {1, 0, 2, 0};
+		
+		// Номер пикселя
 		uint16_t pixelIndex = input / 3;
-	
-		// Используем оригинальную схему: идём по столбцам
-		uint16_t row = pixelIndex % block_height;     // позиция по вертикали (0..47)
-		uint16_t col = pixelIndex / block_height;     // номер столбца (0..63)
-	
-		// Разбиваем по блокам (0..2), каждый по 16 строк
-		uint16_t block = pixelIndex / (width * block_height);
-	
-		// Зигзаг по строкам внутри блока: вверх или вниз
-		uint16_t rowTransformed = (col & 1)
-			? (block_height - 1 - row)
+
+		// Идём по «столбцам»
+		uint16_t row = pixelIndex % block_height;				// 0..15
+		uint16_t col = (pixelIndex / block_height) % width;		// 0..63
+		uint16_t block = pixelIndex / (width * block_height);	// 0..2
+
+		// Зигзаг по строкам в столбце
+		uint16_t rowTransformed = (col & 1) 
+			? (block_height - 1 - row) 
 			: row;
-	
-		// Абсолютная строка после зигзага
-		uint16_t transformed_row = block * (width * block_height) + rowTransformed;
-	
+		
+		// Номер строки на экране (0..47)
+		uint16_t transformed_row = (block * block_height) + rowTransformed;
+
+		// Линейный индекс пикселя на физическом экране
 		uint16_t index = transformed_row * width + col;
-	
-		return (index * 3) + color_map[input - pixelIndex * 3];
+
+		// Смещение по компоненте
+		return (index * 3) + color_map[(input - (pixelIndex * 3))];
 	}
-	
-	
-	
-	
-	
+
 	
 	
 	
@@ -127,11 +136,10 @@ namespace WS2812Logic
 
 
 	typedef uint16_t (*idx_mapper_ptr)(uint16_t idx);
-	idx_mapper_ptr idx_mapper = fast_iterator_raw;
+	idx_mapper_ptr mapper_func = mapper_0;
 	
 
-static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma);
-static void DMA_HalfCpltCallback(DMA_HandleTypeDef *hdma);
+
 
 
 
@@ -146,7 +154,7 @@ static void DMA_HalfCpltCallback(DMA_HandleTypeDef *hdma);
 
 void CreateDMABuffer(uint8_t mode)
 {
-	//Leds::obj.SetOn(Leds::LED_WHITE);
+	Leds::obj.SetOn(Leds::LED_WHITE);
 	
 	static uint16_t buff_copy_logic[3][2] = 
 	{
@@ -164,7 +172,7 @@ void CreateDMABuffer(uint8_t mode)
 	for(uint16_t i = start; i < end; i += 8)
 	{
 		//byte = *frame_ptr++;
-		index = idx_mapper(frame_buffer_idx++);
+		index = mapper_func(frame_buffer_idx++);
 		byte = frame_buffer_ptr[index];
 		mask = 0x80;
 		
@@ -176,10 +184,13 @@ void CreateDMABuffer(uint8_t mode)
 	}
 	//frame_buffer_idx += (end - start) / 8;
 	
-	//Leds::obj.SetOff(Leds::LED_WHITE);
+	Leds::obj.SetOff(Leds::LED_WHITE);
 }
 
 
+
+static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma);
+static void DMA_HalfCpltCallback(DMA_HandleTypeDef *hdma);
 
 void DMA_Start()
 {
@@ -299,18 +310,14 @@ static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma)
 inline void Setup()
 {
 	srand( Analog::mux.Get(10) * 10 );
+	
+	mapper_func = mapper_2;
 
-	idx_mapper = fast_iterator;
-
-	//manager.frame_buffer.Convertor = iterator1;
-	manager.SelectEffect(effect_primitive, 100);
+	manager.SelectEffect(effect_reader, 100);
 
 	//effect_primitive.DrawStop();
 
-
-	buffer.SetMapper(1);
-	buffer.SetBrightness(16);
-
+	buffer.SetBrightness(64);
 	frame_buffer_ptr = buffer.frame_buffer.raw;
 	frame_buffer_len = sizeof(buffer.frame_buffer.raw);
 

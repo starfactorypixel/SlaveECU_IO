@@ -21,6 +21,7 @@ class PXLReaderUART : public PXLReaderInterface
 		
 		virtual int8_t Open(const char *filename) override
 		{
+			//_HW_ReInit(true);
 			_SendRequest('1', 0, 0);
 			bool status = _WaitResponse('2');
 			if(status == true)
@@ -37,6 +38,7 @@ class PXLReaderUART : public PXLReaderInterface
 			bool status = _WaitResponse('6');
 			if(status == true)
 			{
+				//_HW_ReInit(false);
 				return 0;
 			}
 			
@@ -70,18 +72,30 @@ class PXLReaderUART : public PXLReaderInterface
 		{
 			return _buffer_rx_data_ptr;
 		}
-
+		
 	private:
-
-
-
-		void _HW_ReInit()
+		
+		void _HW_ReInit(bool state)
 		{
-			HAL_UART_DeInit(&hDebugUart);
-			hDebugUart.Init.BaudRate = 1500000UL;
+			static uint32_t old_speed = 0;
+			
+			if(state)
+			{
+				if(old_speed == 0)
+					old_speed = hDebugUart.Init.BaudRate;
+				
+				hDebugUart.Init.BaudRate = 1500000UL;
+			}
+			else
+			{
+				if(old_speed != 0)
+					hDebugUart.Init.BaudRate = old_speed;
+			}
+			
+			//HAL_UART_DeInit(&hDebugUart);
 			if(HAL_UART_Init(&hDebugUart) != HAL_OK)
 			{
-				//Error_Handler();
+				// Error_Handler();
 			}
 
 			return;

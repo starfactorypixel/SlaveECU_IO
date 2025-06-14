@@ -10,7 +10,7 @@ class WS2812EffectInterface
 		
 		void PrepareInit(FrameBuffer &frame_buffer)
 		{
-			_frame_buffer = &frame_buffer;
+			this->frame_buffer = &frame_buffer;
 			
 			return;
 		};
@@ -49,7 +49,10 @@ class WS2812EffectInterface
 			return (1.0f - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0f);
 		}
 		
-		FrameBuffer *_frame_buffer = nullptr;
+		
+		FrameBuffer *frame_buffer = nullptr;
 		using color_t = FrameBuffer::color_t;
-	
+		static constexpr uint8_t frame_width = FrameBuffer::frame_width;
+		static constexpr uint8_t frame_height = FrameBuffer::frame_height;
+		
 };

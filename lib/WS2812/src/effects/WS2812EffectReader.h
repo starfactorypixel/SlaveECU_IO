@@ -9,9 +9,6 @@
 
 class WS2812EffectReader : public WS2812EffectInterface
 {
-	static constexpr uint8_t width = FrameBuffer::frame_width;
-	static constexpr uint8_t height = FrameBuffer::frame_height;
-	
 	//PXLReaderArray reader;
 	//PXLReaderSPI reader;
 	PXLReaderUART reader;
@@ -20,7 +17,7 @@ class WS2812EffectReader : public WS2812EffectInterface
 	
 	public:
 		
-		WS2812EffectReader() : pxl(width, height)
+		WS2812EffectReader() : pxl(frame_width, frame_height)
 		{
 			return;
 		};
@@ -61,10 +58,10 @@ class WS2812EffectReader : public WS2812EffectInterface
 		
 		virtual bool FramePrepare(uint32_t time) override
 		{
-			_frame_buffer->Clear();
+			frame_buffer->Clear();
 			
 			uint32_t lasttime = HAL_GetTick();
-			Leds::obj.SetOn(Leds::LED_WHITE);
+			//Leds::obj.SetOn(Leds::LED_WHITE);
 			
 			pxl.GetAutoFrame(time, [&](uint16_t index, uint8_t data[4])
 			{
@@ -72,10 +69,10 @@ class WS2812EffectReader : public WS2812EffectInterface
 					return;
 				
 				color_t &pixel = *(color_t *)data;
-				_frame_buffer->SetPixel(index, pixel);
+				frame_buffer->SetPixel(index, pixel);
 			});
 			
-			Leds::obj.SetOff(Leds::LED_WHITE);
+			//Leds::obj.SetOff(Leds::LED_WHITE);
 			DEBUG_LOG_TOPIC("PXLDraw", "time: %d\n", (HAL_GetTick() - lasttime));
 			
 			return true;
