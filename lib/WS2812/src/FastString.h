@@ -147,3 +147,18 @@ void memcpy_dma32(uint8_t *dst, const uint8_t *src, size_t size)
 	
 	return;
 }
+
+void memcpy_repeat_fast(uint8_t *dest, const uint8_t *src, size_t elem_size, size_t count)
+{
+	memcpy(dest, src, elem_size);
+
+	size_t total_copied = 1;
+	while(total_copied < count)
+	{
+		size_t copy_now = (count - total_copied) < total_copied ? (count - total_copied) : total_copied;
+		memcpy(dest + total_copied * elem_size, dest, copy_now * elem_size);
+		total_copied += copy_now;
+	}
+
+	return;
+}

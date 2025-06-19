@@ -37,6 +37,8 @@ class FrameBuffer
 		static constexpr uint8_t frame_height = DISPLAY_HEIGHT;	// Высота кадра
 		frame_buffer_t frame_buffer;							// Массив пикселей и байт
 		
+		static constexpr color_t color_black = {0x00, 0x00, 0x00};
+		
 		
 		FrameBuffer() : _brightness(255)
 		{}
@@ -92,7 +94,7 @@ class FrameBuffer
 
 			pixel = frame_buffer.pixel[idx];
 			if(clear == true)
-				frame_buffer.pixel[idx] = {0x00, 0x00, 0x00};
+				frame_buffer.pixel[idx] = color_black;
 			
 			return;
 		}
@@ -104,7 +106,7 @@ class FrameBuffer
 			uint16_t idx = x + (y * frame_width);
 			pixel = frame_buffer.pixel[idx];
 			if(clear == true)
-				frame_buffer.pixel[idx] = {0x00, 0x00, 0x00};
+				frame_buffer.pixel[idx] = color_black;
 			
 			return;
 		}
@@ -164,21 +166,6 @@ class FrameBuffer
 		}
 		
 	private:
-		
-		void memcpy_repeat_fast(uint8_t *dest, const uint8_t *src, size_t elem_size, size_t count)
-		{
-			memcpy(dest, src, elem_size);
-			
-			size_t total_copied = 1;
-			while(total_copied < count)
-			{
-				size_t copy_now = (count - total_copied) < total_copied ? (count - total_copied) : total_copied;
-				memcpy(dest + total_copied * elem_size, dest, copy_now * elem_size);
-				total_copied += copy_now;
-			}
-
-			return;
-		}
 		
 		uint8_t _brightness;
 		
