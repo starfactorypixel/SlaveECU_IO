@@ -1,52 +1,40 @@
 #pragma once
 #include <inttypes.h>
 #include "WS2812EffectInterface.h"
-#include "PrimitiveDraw.h"
 
 class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 {
 	using draw_func = void (*)(const uint32_t time);
-	
+
 	public:
 
 		enum type_t : uint8_t
 		{
-			SIGNAL_NONE = 0,				// Выключить всё
+			SIGNAL_NONE = 0x00,				// Выключить всё
 			SIGNAL_SIDE = (1 << 0),			// Габаритный огонь
 			SIGNAL_REVERSE = (1 << 1),		// Задний ход
 			SIGNAL_LEFT = (1 << 2),			// Левый поворотник
 			SIGNAL_RIGHT = (1 << 3),		// Правый поворотник
 			SIGNAL_STOP = (1 << 4),			// Стоп сигнал
 			SIGNAL_EMERGENCY = (1 << 5),	// Аварийный сигнал
+			SIGNAL_ALL = 0xFF				// Включить все сигналы
 		};
-
-		struct data_t
-		{
-			uint16_t delay;
-			draw_func func;
-		};
-
-		data_t _dataa[1] = 
-		{
-			//{0, _Draw}
-		};
-
-
 		
-		WS2812EffectPrimitiveLights() : _pd(frame_width, frame_height)
+		
+		WS2812EffectPrimitiveLights() : _data{0, SIGNAL_NONE}
 		{
 			return;
 		};
 		
 		virtual void Init() override
 		{
-			_pd.SetFrameBuffer(*frame_buffer);
-			
 			return;
 		}
 		
 		virtual void Tick(uint32_t time) override
 		{
+			_data.now_time = time;
+
 			return;
 		}
 		
@@ -85,18 +73,6 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 			return (mode == 0) ? TurnOff(type) : TurnOn(type);
 		}
 		
-		void DrawStop()
-		{
-			PrimitiveDraw::line_params_t params = {};
-			params.x0 = 3;
-			params.y0 = 4;
-			params.x1 = 110;
-			params.y1 = 15;
-			params.color = {0x05, 0x05, 0x00};
-			params.thickness = 3;
-			_pd.draw_line(params);
-		}
-
 	private:
 		
 		void _RenderSignals()
@@ -133,74 +109,127 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 
 			return;
 		}
-
-
-typedef struct {
-    int16_t x;
-    int16_t y;
-} Point;
-void drawRectangle(Point p1, Point p2, color_t color, bool fill) {
-    int16_t x0 = (p1.x < p2.x) ? p1.x : p2.x;
-    int16_t x1 = (p1.x > p2.x) ? p1.x : p2.x;
-    int16_t y0 = (p1.y < p2.y) ? p1.y : p2.y;
-    int16_t y1 = (p1.y > p2.y) ? p1.y : p2.y;
-
-    if (fill) {
-        for (int16_t y = y0; y <= y1; y++) {
-            for (int16_t x = x0; x <= x1; x++) {
-				frame_buffer->SetPixel(x, y, color);
-            }
-        }
-    } else {
-        for (int16_t x = x0; x <= x1; x++) {
-            frame_buffer->SetPixel(x, y0, color);
-            frame_buffer->SetPixel(x, y1, color);
-        }
-        for (int16_t y = y0; y <= y1; y++) {
-            frame_buffer->SetPixel(x0, y, color);
-            frame_buffer->SetPixel(x1, y, color);
-        }
-    }
-}
-
-
-
-
+		
 		void _DrawSideLights()
 		{
+			static color_t color = {0x80, 0x00, 0x00};
+			uint16_t max_x = frame_width - 1;
+			uint16_t max_y = frame_height - 1;
+
+			frame_buffer->SetPixel(0, 0, color);
+			frame_buffer->SetPixel(0, max_y, color);
+			_DrawRectangle( {1, 0}, {2, max_y}, color, false );
+
+			frame_buffer->SetPixel(max_x, 0, color);
+			frame_buffer->SetPixel(max_x, max_y, color);
+			_DrawRectangle( {(uint16_t)(max_x - 2), 0}, {(uint16_t)(max_x - 1), max_y}, color, false );
+			
 			return;
 		}
 		
 		void _DrawReverseLights()
 		{
+			static color_t color = {0xFF, 0xFF, 0xFF};
+			uint16_t max_x = frame_width - 1;
+			uint16_t max_y = frame_height - 1;
+			
+			_DrawRectangle( {1, 5}, {15, (uint16_t)(max_y - 5)}, color, true );
+			_DrawRectangle( {(uint16_t)(max_x - 15), 5}, {(uint16_t)(max_x - 1), (uint16_t)(max_y - 5)}, color, true );
+
 			return;
 		}
 
 		void _DrawLeftBlink()
 		{
+			static color_t color = {0xFF, 0xA5, 0x00};
+			uint16_t max_x = frame_width - 1;
+			uint16_t max_y = frame_height - 1;
+
+			if((_data.now_time / 500) % 2 == 0) return;
+
+			_DrawRectangle( {1, 5}, {15, (uint16_t)(max_y - 5)}, color, true );
+			
 			return;
 		}
 
 		void _DrawRightBlink()
 		{
+			static color_t color = {0xFF, 0xA5, 0x00};
+			uint16_t max_x = frame_width - 1;
+			uint16_t max_y = frame_height - 1;
+
+			if((_data.now_time / 500) % 2 == 0) return;
+
+			_DrawRectangle( {(uint16_t)(max_x - 15), 5}, {(uint16_t)(max_x - 1), (uint16_t)(max_y - 5)}, color, true );
+
 			return;
 		}
 
 		void _DrawStopLights()
 		{
+			static color_t color = {0xFF, 0x00, 0x00};
+			uint16_t max_x = frame_width - 1;
+			uint16_t max_y = frame_height - 1;
+
+			_DrawRectangle( {1, 3}, {15, (uint16_t)(max_y - 3)}, color, true );
+			_DrawRectangle( {(uint16_t)(max_x - 15), 3}, {(uint16_t)(max_x - 1), (uint16_t)(max_y - 3)}, color, true );
+			
 			return;
 		}
 
 		void _DrawEmergencyBlink()
 		{
+			_DrawLeftBlink();
+			_DrawRightBlink();
+			
+			return;
+		}
+
+		
+		typedef struct
+		{
+			uint16_t x;
+			uint16_t y;
+		} Point;
+		
+		void _DrawRectangle(Point p1, Point p2, color_t color, bool fill)
+		{
+			uint16_t x0 = (p1.x < p2.x) ? p1.x : p2.x;
+			uint16_t x1 = (p1.x > p2.x) ? p1.x : p2.x;
+			uint16_t y0 = (p1.y < p2.y) ? p1.y : p2.y;
+			uint16_t y1 = (p1.y > p2.y) ? p1.y : p2.y;
+			
+			if(fill)
+			{
+				for(uint16_t y = y0; y <= y1; y++)
+				{
+					for(uint16_t x = x0; x <= x1; x++)
+					{
+						frame_buffer->SetPixel(x, y, color);
+					}
+				}
+			}
+			else
+			{
+				for(uint16_t x = x0; x <= x1; x++)
+				{
+					frame_buffer->SetPixel(x, y0, color);
+					frame_buffer->SetPixel(x, y1, color);
+				}
+				for(uint16_t y = y0; y <= y1; y++)
+				{
+					frame_buffer->SetPixel(x0, y, color);
+					frame_buffer->SetPixel(x1, y, color);
+				}
+			}
+			
 			return;
 		}
 		
-		PrimitiveDraw _pd;
 		struct
 		{
+			uint32_t now_time = 0;
 			uint8_t mode;
-			uint8_t state;
 		} _data;
 		
 };
