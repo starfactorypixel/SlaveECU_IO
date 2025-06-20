@@ -61,18 +61,22 @@ class WS2812EffectReader : public WS2812EffectInterface
 			frame_buffer->Clear();
 			
 			uint32_t lasttime = HAL_GetTick();
-			//Leds::obj.SetOn(Leds::LED_WHITE);
+			Leds::obj.SetOn(Leds::LED_WHITE);
 			
-			pxl.GetAutoFrame(time, [&](uint16_t index, uint8_t data[4])
+			pxl.GetAutoFrame(time, [&](const pxl_pixel_t &pxl_pixel)
 			{
-				if(data[3] < 255)
+				if(pxl_pixel.color[3] < 255)
 					return;
 				
-				color_t &pixel = *(color_t *)data;
-				frame_buffer->SetPixel(index, pixel);
+				color_t &pixel = *(color_t *)pxl_pixel.color;
+				
+				if(pxl_pixel.repeat > 1)
+					frame_buffer->SetPixel(pxl_pixel.index, pixel, pxl_pixel.repeat);
+				else
+					frame_buffer->SetPixel(pxl_pixel.index, pixel);
 			});
 			
-			//Leds::obj.SetOff(Leds::LED_WHITE);
+			Leds::obj.SetOff(Leds::LED_WHITE);
 			DEBUG_LOG_TOPIC("PXLDraw", "time: %d\n", (HAL_GetTick() - lasttime));
 			
 			return true;

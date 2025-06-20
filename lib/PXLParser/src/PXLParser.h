@@ -15,6 +15,8 @@ class PXLParser
 	static constexpr uint8_t _file_header_size_bytes = sizeof(file_header_t);
 	static constexpr uint8_t _frame_header_size_bytes = sizeof(file_frame_t);
 	
+	typedef std::function<void(const pxl_pixel_t &pxl_pixel)> pixel_callback_t;
+
 	public:
 		
 		PXLParser(uint8_t width, uint8_t height) : _cfg{width, height, false, false}
@@ -31,8 +33,8 @@ class PXLParser
 
 
 
-	//typedef std::function<void(file_pixel_t &pixel_data, uint8_t x, uint8_t y)> pixel_callback_t;
-	typedef std::function<void(uint16_t index, uint8_t data[4])> pixel_callback_t;
+
+	
 
 	enum error_t : int8_t
 	{
@@ -338,17 +340,15 @@ class PXLParser
 				_ParsingFailed(ERROR_IDX_OVERFLOW);
 				return false;
 			}
-			
 
-			while( --curr_pixel.repeat )
+
+			#warning Пересмотреть концепцию повторяющийхся пикелей. Что есть repeat - кол-во НОВЫХ повторов, или включая текущий.
+			callback(curr_pixel);
+			if(curr_pixel.repeat > 1)
 			{
-				callback(curr_pixel.index, curr_pixel.color);
-				++curr_pixel.index;
+				curr_pixel.repeat = 1;
+				curr_pixel.index += curr_pixel.repeat - 1;
 			}
-			callback(curr_pixel.index, curr_pixel.color);
-			
-			curr_pixel.repeat = 1;
-			
 			
 			_file.buffer_ptr += add_offset;
 			_file.offset += add_offset;

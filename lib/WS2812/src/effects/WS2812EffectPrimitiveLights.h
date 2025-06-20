@@ -109,12 +109,13 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 
 			return;
 		}
+
+		static constexpr uint16_t max_x = frame_width - 1;
+		static constexpr uint16_t max_y = frame_height - 1;
 		
 		void _DrawSideLights()
 		{
 			static color_t color = {0x80, 0x00, 0x00};
-			uint16_t max_x = frame_width - 1;
-			uint16_t max_y = frame_height - 1;
 
 			frame_buffer->SetPixel(0, 0, color);
 			frame_buffer->SetPixel(0, max_y, color);
@@ -130,9 +131,7 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		void _DrawReverseLights()
 		{
 			static color_t color = {0xFF, 0xFF, 0xFF};
-			uint16_t max_x = frame_width - 1;
-			uint16_t max_y = frame_height - 1;
-			
+
 			_DrawRectangle( {1, 5}, {15, (uint16_t)(max_y - 5)}, color, true );
 			_DrawRectangle( {(uint16_t)(max_x - 15), 5}, {(uint16_t)(max_x - 1), (uint16_t)(max_y - 5)}, color, true );
 
@@ -142,8 +141,6 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		void _DrawLeftBlink()
 		{
 			static color_t color = {0xFF, 0xA5, 0x00};
-			uint16_t max_x = frame_width - 1;
-			uint16_t max_y = frame_height - 1;
 
 			if((_data.now_time / 500) % 2 == 0) return;
 
@@ -155,8 +152,6 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		void _DrawRightBlink()
 		{
 			static color_t color = {0xFF, 0xA5, 0x00};
-			uint16_t max_x = frame_width - 1;
-			uint16_t max_y = frame_height - 1;
 
 			if((_data.now_time / 500) % 2 == 0) return;
 
@@ -168,8 +163,6 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		void _DrawStopLights()
 		{
 			static color_t color = {0xFF, 0x00, 0x00};
-			uint16_t max_x = frame_width - 1;
-			uint16_t max_y = frame_height - 1;
 
 			_DrawRectangle( {1, 3}, {15, (uint16_t)(max_y - 3)}, color, true );
 			_DrawRectangle( {(uint16_t)(max_x - 15), 3}, {(uint16_t)(max_x - 1), (uint16_t)(max_y - 3)}, color, true );
@@ -228,7 +221,7 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		
 		struct
 		{
-			uint32_t now_time = 0;
+			uint32_t now_time;
 			uint8_t mode;
 		} _data;
 		
