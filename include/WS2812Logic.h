@@ -154,7 +154,7 @@ namespace WS2812Logic
 
 void CreateDMABuffer(uint8_t mode)
 {
-	Leds::obj.SetOn(Leds::LED_WHITE);
+	//Leds::obj.SetOn(Leds::LED_WHITE);
 	
 	static uint16_t buff_copy_logic[3][2] = 
 	{
@@ -184,7 +184,7 @@ void CreateDMABuffer(uint8_t mode)
 	}
 	//frame_buffer_idx += (end - start) / 8;
 	
-	Leds::obj.SetOff(Leds::LED_WHITE);
+	//Leds::obj.SetOff(Leds::LED_WHITE);
 }
 
 
@@ -315,9 +315,10 @@ inline void Setup()
 
 	manager.SelectEffect(effect_reader, 100);
 
-	//effect_primitive.DrawStop();
+	//effect_primitive.Control(WS2812EffectPrimitiveLights::SIGNAL_EMERGENCY, 255);
 
 	buffer.SetBrightness(64);
+	buffer.SetColorCorrection(255, 211, 167);
 	frame_buffer_ptr = buffer.frame_buffer.raw;
 	frame_buffer_len = sizeof(buffer.frame_buffer.raw);
 

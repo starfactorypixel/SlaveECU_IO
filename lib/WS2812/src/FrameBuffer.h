@@ -40,7 +40,7 @@ class FrameBuffer
 		static constexpr color_t color_black = {0x00, 0x00, 0x00};
 		
 		
-		FrameBuffer() : _brightness(255)
+		FrameBuffer() : _brightness(127), _corr_red(255), _corr_greed(255), _corr_blue(255)
 		{}
 		
 		
@@ -75,16 +75,26 @@ class FrameBuffer
 			return;
 		}
 		
+		void SetColorCorrection(uint8_t red, uint8_t green, uint8_t blue)
+		{
+			_corr_red = red;
+			_corr_greed = green;
+			_corr_blue = blue;
+			
+			return;
+		}
+		
 		void Prepare()
 		{
-			if(_brightness < 255)
+			uint8_t scale_r = (_corr_red * _brightness) / 255;
+			uint8_t scale_g = (_corr_greed * _brightness) / 255;
+			uint8_t scale_b = (_corr_blue * _brightness) / 255;
+			
+			for(color_t &pixel : frame_buffer.pixel)
 			{
-				for(color_t &pixel : frame_buffer.pixel)
-				{
-					AdjustBrightness(pixel, _brightness);
-				}
+				AdjustBrightness(pixel, scale_r, scale_g, scale_b);
 			}
-
+			
 			return;
 		}
 		
@@ -154,13 +164,13 @@ class FrameBuffer
 			return;
 		}
 		
-		void AdjustBrightness(color_t &color, uint8_t brightness)
+		void AdjustBrightness(color_t &color, uint8_t scale_r, uint8_t scale_g, uint8_t scale_b)
 		{
 			if( (*(uint32_t*)&color & 0x00FFFFFF) == 0 ) return;
-
-			color.R = (color.R * brightness) / 255;
-			color.G = (color.G * brightness) / 255;
-			color.B = (color.B * brightness) / 255;
+			
+			color.R = (color.R * scale_r) / 255;
+			color.G = (color.G * scale_g) / 255;
+			color.B = (color.B * scale_b) / 255;
 			
 			return;
 		}
@@ -168,5 +178,8 @@ class FrameBuffer
 	private:
 		
 		uint8_t _brightness;
-		
+		uint8_t _corr_red;
+		uint8_t _corr_greed;
+		uint8_t _corr_blue;
+
 };
