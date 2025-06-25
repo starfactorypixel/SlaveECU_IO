@@ -1,6 +1,6 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812EffectInterface.h"
+#include "FrameEffectInterface.h"
 
 /*
 	frame_buffer - Объект кадрового буфера с параметрами и флагами
@@ -11,7 +11,7 @@
 	Render() - Вызывается каждые 100 мс
 */
 
-class WS2812EffectTemplate : public WS2812EffectInterface
+class FrameEffectTemplate : public FrameEffectInterface
 {
 	public:
 		

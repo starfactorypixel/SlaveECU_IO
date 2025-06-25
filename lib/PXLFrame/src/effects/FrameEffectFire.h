@@ -1,9 +1,9 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812EffectInterface.h"
+#include "FrameEffectInterface.h"
 #include "CUtils_Perlin2DInt.h"
 
-class WS2812EffectFire : public WS2812EffectInterface
+class FrameEffectFire : public FrameEffectInterface
 {
 	public:
 		

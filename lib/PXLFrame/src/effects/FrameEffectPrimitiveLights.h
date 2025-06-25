@@ -1,8 +1,8 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812EffectInterface.h"
+#include "FrameEffectInterface.h"
 
-class WS2812EffectPrimitiveLights : public WS2812EffectInterface
+class FrameEffectPrimitiveLights : public FrameEffectInterface
 {
 	using draw_func = void (*)(const uint32_t time);
 
@@ -21,7 +21,7 @@ class WS2812EffectPrimitiveLights : public WS2812EffectInterface
 		};
 		
 		
-		WS2812EffectPrimitiveLights() : _data{0, SIGNAL_NONE}
+		FrameEffectPrimitiveLights() : _data{0, SIGNAL_NONE}
 		{
 			return;
 		};

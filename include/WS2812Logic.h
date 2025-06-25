@@ -13,12 +13,12 @@
 #define DISPLAY_WIDTH		64		// переименовать в FRAME_ OR NOT?
 #define DISPLAY_HEIGHT		48
 #include <FrameBuffer.h>
-#include <WS2812Manager.h>
-#include <effects/WS2812EffectFire.h>
-#include <effects/WS2812EffectSphere.h>
-#include <effects/WS2812EffectGameOfLife.h>
-#include <effects/WS2812EffectPrimitiveLights.h>
-#include <effects/WS2812EffectReader.h>
+#include <FrameManager.h>
+#include <effects/FrameEffectFire.h>
+#include <effects/FrameEffectSphere.h>
+#include <effects/FrameEffectGameOfLife.h>
+#include <effects/FrameEffectPrimitiveLights.h>
+#include <effects/FrameEffectReader.h>
 
 //extern TIM_HandleTypeDef htim2;
 //extern DMA_HandleTypeDef hdma_tim2_ch1;
@@ -57,12 +57,12 @@ namespace WS2812Logic
 
 	FrameBuffer buffer;
 
-	WS2812Manager manager(buffer);
-	WS2812EffectFire effect_fire;
-	WS2812EffectSphere effect_sphere;
-	WS2812EffectGameOfLife effect_game;
-	WS2812EffectPrimitiveLights effect_primitive;
-	WS2812EffectReader effect_reader;
+	FrameManager manager(buffer);
+	FrameEffectFire effect_fire;
+	FrameEffectSphere effect_sphere;
+	FrameEffectGameOfLife effect_game;
+	FrameEffectPrimitiveLights effect_primitive;
+	FrameEffectReader effect_reader;
 
 
 	// Маппер без маппинга
@@ -315,7 +315,7 @@ inline void Setup()
 
 	manager.SelectEffect(effect_reader, 100);
 
-	//effect_primitive.Control(WS2812EffectPrimitiveLights::SIGNAL_EMERGENCY, 255);
+	//effect_primitive.Control(FrameEffectPrimitiveLights::SIGNAL_EMERGENCY, 255);
 
 	buffer.SetBrightness(64);
 	buffer.SetColorCorrection(255, 211, 167);

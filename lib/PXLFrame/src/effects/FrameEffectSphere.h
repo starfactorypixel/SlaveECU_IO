@@ -1,8 +1,8 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812EffectInterface.h"
+#include "FrameEffectInterface.h"
 
-class WS2812EffectSphere : public WS2812EffectInterface
+class FrameEffectSphere : public FrameEffectInterface
 {
 	static constexpr uint8_t _count = 6;
 

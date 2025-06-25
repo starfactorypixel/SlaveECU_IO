@@ -1,8 +1,8 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812EffectInterface.h"
+#include "FrameEffectInterface.h"
 
-class WS2812EffectGameOfLife : public WS2812EffectInterface
+class FrameEffectGameOfLife : public FrameEffectInterface
 {
 	public:
 		

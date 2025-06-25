@@ -1,13 +1,13 @@
 #pragma once
 #include <inttypes.h>
-#include "WS2812EffectInterface.h"
+#include "FrameEffectInterface.h"
 
 #include <PXLParser.h>
-#include <PXLReaderArray.h>
-#include <PXLReaderSPI.h>
-#include <PXLReaderUART.h>
+#include <readers/PXLReaderArray.h>
+#include <readers/PXLReaderSPI.h>
+#include <readers/PXLReaderUART.h>
 
-class WS2812EffectReader : public WS2812EffectInterface
+class FrameEffectReader : public FrameEffectInterface
 {
 	//PXLReaderArray reader;
 	//PXLReaderSPI reader;
@@ -17,7 +17,7 @@ class WS2812EffectReader : public WS2812EffectInterface
 	
 	public:
 		
-		WS2812EffectReader() : pxl(frame_width, frame_height)
+		FrameEffectReader() : pxl(frame_width, frame_height)
 		{
 			return;
 		};

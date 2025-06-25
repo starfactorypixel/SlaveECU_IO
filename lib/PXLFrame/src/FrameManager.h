@@ -1,20 +1,20 @@
 #pragma once
 #include <inttypes.h>
 #include "FrameBuffer.h"
-#include "WS2812EffectInterface.h"
+#include "FrameEffectInterface.h"
 
-class WS2812Manager
+class FrameManager
 {
 	static constexpr uint32_t _tick_time = 5;
 	
 	public:
 		
-		WS2812Manager(FrameBuffer &frame_buffer) : frame_buffer(&frame_buffer)
+		FrameManager(FrameBuffer &frame_buffer) : frame_buffer(&frame_buffer)
 		{
 			return;
 		}
 		
-		void SelectEffect(WS2812EffectInterface &effect, uint32_t frame_rate = 100)
+		void SelectEffect(FrameEffectInterface &effect, uint32_t frame_rate = 100)
 		{
 			_effect = &effect;
 			_frame_rate = frame_rate;
@@ -60,7 +60,7 @@ class WS2812Manager
 		
 	private:
 		
-		WS2812EffectInterface *_effect = nullptr;
+		FrameEffectInterface *_effect = nullptr;
 		uint32_t _frame_rate;
 		uint32_t last_tick = 0;
 		uint32_t last_render = 0;

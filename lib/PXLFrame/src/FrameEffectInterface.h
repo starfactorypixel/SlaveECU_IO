@@ -4,7 +4,7 @@
 #include "FrameBuffer.h"
 #include "FastString.h"
 
-class WS2812EffectInterface
+class FrameEffectInterface
 {
 	public:
 		
