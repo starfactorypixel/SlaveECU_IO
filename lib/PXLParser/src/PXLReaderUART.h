@@ -137,46 +137,50 @@ class PXLReaderUART : public PXLReaderInterface
 
 			return false;
 		}
-
-
-
-
-
-// Функция для конвертации uint32_t в ASCII без sprintf
-uint8_t *u32_to_ascii(uint32_t value, uint8_t *buf) {
-    char tmp[11]; // макс 10 цифр + \0
-    int i = 0;
-
-    if (value == 0) {
-        *buf++ = '0';
-        *buf = '\0';
-        return buf;
-    }
-
-    while (value) {
-        tmp[i++] = '0' + (value % 10);
-        value /= 10;
-    }
-
-    // обратная запись
-    for (int j = i - 1; j >= 0; j--) {
-        *buf++ = tmp[j];
-    }
-    *buf = '\0';
-    return buf;
-}
-
-// Простой парсер uint32 из ASCII. Возвращает новое положение указателя.
-uint8_t *ascii_to_u32(uint8_t *str, uint32_t* out) {
-    uint32_t result = 0;
-    while (*str >= '0' && *str <= '9') {
-        result = result * 10 + (*str - '0');
-        str++;
-    }
-    *out = result;
-    return str;
-}
-
+		
+		// Функция для конвертации uint32_t в ASCII строку
+		uint8_t *u32_to_ascii(uint32_t value, uint8_t *buf)
+		{
+			if(value == 0)
+			{
+				*buf++ = '0';
+				*buf = '\0';
+				
+				return buf;
+			}
+			
+			char tmp[11];
+			int i = 0;
+			while(value)
+			{
+				tmp[i++] = '0' + (value % 10);
+				value /= 10;
+			}
+			
+			for(int j = i - 1; j >= 0; j--)
+			{
+				*buf++ = tmp[j];
+			}
+			*buf = '\0';
+			
+			return buf;
+		}
+		
+		// Функция для конвертации ASCII строки в uint32
+		uint8_t *ascii_to_u32(uint8_t *str, uint32_t *out)
+		{
+			uint32_t result = 0;
+			
+			while(*str >= '0' && *str <= '9')
+			{
+				result = result * 10 + (*str - '0');
+				str++;
+			}
+			*out = result;
+			
+			return str;
+		}
+		
 		uint16_t generate_pxls_packet(char id, uint32_t offset, uint32_t length, uint8_t *out_buf)
 		{
 			uint8_t *ptr = out_buf;
@@ -198,10 +202,7 @@ uint8_t *ascii_to_u32(uint8_t *str, uint32_t* out) {
 			
 			return (uint16_t)(ptr - out_buf);
 		}
-
-
-
-
+		
 		uint8_t parse_pxls_packet(uint8_t *input, uint16_t len, PXLS_Packet *out)
 		{
 			if(len < 10 || input[0] != '+' || strncmp((const char *)input, "+PXLS=", 6) != 0)
@@ -233,19 +234,11 @@ uint8_t *ascii_to_u32(uint8_t *str, uint32_t* out) {
 			
 			return 0;
 		}
-
-
-
-
-
-
-
-
 		
 		uint8_t _buffer_rx[_max_data_request + 64];
 		uint8_t _buffer_tx[64];
-
+		
 		const uint8_t *_buffer_rx_data_ptr;
-
+		
 		PXLS_Packet _parsed_data = {};
 };

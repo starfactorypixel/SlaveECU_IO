@@ -4,17 +4,17 @@
 
 class PXLReaderArray : public PXLReaderInterface
 {
+	static constexpr uint8_t _map_size = 10;
+	
 	public:
-
+		
 		struct file_map_t
 		{
 			const char *filename;
 			const uint8_t *array_ptr;
 			uint32_t array_length;
-
-
 		};
-
+		
 		void PutFileMap(file_map_t map)
 		{
 			if(_map_idx == sizeofarray(_map)) return;
@@ -23,7 +23,7 @@ class PXLReaderArray : public PXLReaderInterface
 
 			return;
 		}
-
+		
 		
 		virtual int8_t Open(const char *filename) override
 		{
@@ -62,7 +62,6 @@ class PXLReaderArray : public PXLReaderInterface
 			return bytes_to_read;
 		}
 		
-
 		virtual const uint8_t *GetBufferPtr() override
 		{
 			return _active_file_ptr;
@@ -70,7 +69,7 @@ class PXLReaderArray : public PXLReaderInterface
 
 	private:
 		
-		file_map_t _map[6];
+		file_map_t _map[_map_size];
 		uint8_t _map_idx = 0;
 
 		file_map_t *_active_file = nullptr;
