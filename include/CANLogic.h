@@ -219,6 +219,25 @@ namespace CANLib
 		obj_out_8.RegisterFunctionToggle(OnPowerOutputCtrl_8);
 		obj_out_8.RegisterFunctionAction(OnPowerOutputCtrl_8);
 		obj_out_8.RegisterFunctionRequest(OnPowerOutputCtrl_8);
+
+
+
+		Config::eeprom_body_t &cfg = Config::obj.body;
+		
+		if(cfg.in1.enable == true)
+		{
+			cfg.in1.interval_ms;
+			if(cfg.in1.realtime == true)
+			{
+				//obj_in_1.
+			}
+			else
+			{
+				//obj_in_1.
+			}
+		}
+
+		
 		
 
 
