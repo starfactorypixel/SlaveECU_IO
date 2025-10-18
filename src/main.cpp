@@ -1,9 +1,9 @@
 #include "main.h"
 #include <ConstantLibrary.h>
 #include <LoggerLibrary.h>
-#include "SPI.h"
 #include "About.h"
 #include "Leds.h"
+#include "SPI.h"
 #include <Config.h>
 #include "OutputLogic.h"
 #include "CANLogic.h"
@@ -24,8 +24,11 @@ static void MX_ADC1_Init(void);
 
 
 
+/*
 
-
+*/
+//TIM_HandleTypeDef htim2;
+//DMA_HandleTypeDef hdma_tim2_ch1;
 
 
 
@@ -106,6 +109,8 @@ int main(void)
 	Analog::Setup();
 	Outputs::Setup();
 	WS2812Logic::Setup();
+
+	uint32_t timers[8] = {};
 	
 	uint32_t current_time = HAL_GetTick();
 	while (1)
@@ -113,13 +118,33 @@ int main(void)
 		// don't need to update current_time because it is always updated by Loop() functions
 		// current_time = HAL_GetTick();
 
+		timers[0] = HAL_GetTick();
 		About::Loop(current_time);
+		timers[1] = HAL_GetTick();
 		Leds::Loop(current_time);
+		timers[2] = HAL_GetTick();
 		SPI::Loop(current_time);
+		timers[3] = HAL_GetTick();
 		CANLib::Loop(current_time);
+		timers[4] = HAL_GetTick();
 		Analog::Loop(current_time);
+		timers[5] = HAL_GetTick();
 		Outputs::Loop(current_time);
+		timers[6] = HAL_GetTick();
 		WS2812Logic::Loop(current_time);
+		timers[7] = HAL_GetTick();
+/*
+		if(timers[7]-timers[0] > 3)
+		DEBUG_LOG_TOPIC("TIME", "%d-%d-%d-%d-%d-%d-%d=%d\n", timers[1]-timers[0], 
+															 timers[2]-timers[1], 
+															 timers[3]-timers[2], 
+															 timers[4]-timers[3], 
+															 timers[5]-timers[4], 
+															 timers[6]-timers[5], 
+															 timers[7]-timers[6], 
+															 timers[7]-timers[0]
+															);
+*/
 	}
 }
 
@@ -244,7 +269,7 @@ static void MX_SPI2_Init(void)
 static void MX_USART1_UART_Init(void)
 {
 	hDebugUart.Instance = USART1;
-	hDebugUart.Init.BaudRate = 500000;
+	hDebugUart.Init.BaudRate = 1500000;
 	hDebugUart.Init.WordLength = UART_WORDLENGTH_8B;
 	hDebugUart.Init.StopBits = UART_STOPBITS_1;
 	hDebugUart.Init.Parity = UART_PARITY_NONE;

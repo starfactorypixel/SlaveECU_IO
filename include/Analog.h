@@ -91,7 +91,7 @@ namespace Analog
 			}
 		}
 		
-		if(address == 15)
+		if(address == 150)
 		{
 			DEBUG_LOG_TOPIC("MUX", "%04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d\n", mux.adc_value[0], mux.adc_value[1], mux.adc_value[2], 
 			mux.adc_value[3], mux.adc_value[4], mux.adc_value[5], mux.adc_value[6], mux.adc_value[7], mux.adc_value[8], mux.adc_value[9], mux.adc_value[10], mux.adc_value[11], 
