@@ -118,21 +118,21 @@ int main(void)
 		// don't need to update current_time because it is always updated by Loop() functions
 		// current_time = HAL_GetTick();
 
-		timers[0] = HAL_GetTick();
+		//timers[0] = HAL_GetTick();
 		About::Loop(current_time);
-		timers[1] = HAL_GetTick();
+		//timers[1] = HAL_GetTick();
 		Leds::Loop(current_time);
-		timers[2] = HAL_GetTick();
+		//timers[2] = HAL_GetTick();
 		SPI::Loop(current_time);
-		timers[3] = HAL_GetTick();
+		//timers[3] = HAL_GetTick();
 		CANLib::Loop(current_time);
-		timers[4] = HAL_GetTick();
+		//timers[4] = HAL_GetTick();
 		Analog::Loop(current_time);
-		timers[5] = HAL_GetTick();
+		//timers[5] = HAL_GetTick();
 		Outputs::Loop(current_time);
-		timers[6] = HAL_GetTick();
+		//timers[6] = HAL_GetTick();
 		WS2812Logic::Loop(current_time);
-		timers[7] = HAL_GetTick();
+		//timers[7] = HAL_GetTick();
 /*
 		if(timers[7]-timers[0] > 3)
 		DEBUG_LOG_TOPIC("TIME", "%d-%d-%d-%d-%d-%d-%d=%d\n", timers[1]-timers[0], 
@@ -269,7 +269,7 @@ static void MX_SPI2_Init(void)
 static void MX_USART1_UART_Init(void)
 {
 	hDebugUart.Instance = USART1;
-	hDebugUart.Init.BaudRate = 1500000;
+	hDebugUart.Init.BaudRate = 4000000;
 	hDebugUart.Init.WordLength = UART_WORDLENGTH_8B;
 	hDebugUart.Init.StopBits = UART_STOPBITS_1;
 	hDebugUart.Init.Parity = UART_PARITY_NONE;

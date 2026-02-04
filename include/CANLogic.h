@@ -52,6 +52,8 @@ namespace CANLib
 			{
 				bool result = Outputs::outObj.SetWrite( port, can_frame.data[0] );
 				can_frame.function_id = (result == true) ? CAN_FUNC_EVENT_OK : CAN_FUNC_EVENT_ERROR;
+				can_frame.data[0] = (result == true) ? 0xFF : 0x00;
+				can_frame.raw_data_length = 2;
 				
 				break;
 			}
@@ -59,6 +61,9 @@ namespace CANLib
 			{
 				Outputs::outObj.SetToggle(port);
 				can_frame.function_id = CAN_FUNC_EVENT_OK;
+				uint8_t result = (Outputs::outObj.GetState(port) > 0) ? 0xFF : 0x00;
+				can_frame.data[0] = result;
+				can_frame.raw_data_length = 2;
 				
 				break;
 			}
