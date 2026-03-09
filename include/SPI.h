@@ -10,7 +10,7 @@ extern SPI_HandleTypeDef hspi2;
 
 namespace SPI
 {
-	inline void SPI_Config(const SPIManagerInterface::spi_config_t &config)
+	inline void SPI_Config1(const SPIManagerInterface::spi_config_t &config)
 	{
 		if(hspi2.Init.BaudRatePrescaler == config.prescaler && hspi2.Init.FirstBit == config.first_bit) return;
 
@@ -20,6 +20,25 @@ namespace SPI
 		HAL_SPI_Init(&hspi2);
 	}
 
+	inline void SPI_Config(const SPIManagerInterface::spi_config_t &config)
+	{
+		uint32_t cr1 = hspi2.Instance->CR1;
+		uint32_t desired = (config.prescaler & SPI_CR1_BR) | (config.first_bit & SPI_CR1_LSBFIRST);
+		uint32_t current = cr1 & (SPI_CR1_BR | SPI_CR1_LSBFIRST);
+		if(current == desired) return;
+		
+		__HAL_SPI_DISABLE(&hspi2);
+
+		cr1 &= ~(SPI_CR1_BR | SPI_CR1_LSBFIRST);
+		cr1 |= desired;
+
+		hspi2.Instance->CR1 = cr1;
+		hspi2.Init.BaudRatePrescaler = config.prescaler;
+		hspi2.Init.FirstBit = config.first_bit;
+		
+		__HAL_SPI_ENABLE(&hspi2);
+	}
+	
 	inline void SPI_Write(uint8_t *data, uint16_t length)
 	{
 		//HAL_SPI_Transmit(&hspi2, data, length, 100);

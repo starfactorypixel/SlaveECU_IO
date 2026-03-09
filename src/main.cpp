@@ -269,7 +269,7 @@ static void MX_SPI2_Init(void)
 static void MX_USART1_UART_Init(void)
 {
 	hDebugUart.Instance = USART1;
-	hDebugUart.Init.BaudRate = 4000000;
+	hDebugUart.Init.BaudRate = 500000;
 	hDebugUart.Init.WordLength = UART_WORDLENGTH_8B;
 	hDebugUart.Init.StopBits = UART_STOPBITS_1;
 	hDebugUart.Init.Parity = UART_PARITY_NONE;
