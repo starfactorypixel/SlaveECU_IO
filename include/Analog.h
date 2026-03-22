@@ -12,7 +12,9 @@ namespace Analog
 	void OnMuxResponse(uint8_t address, uint16_t value);
 	
 	DrakePinA adc_pin({&hadc1, GPIOB, GPIO_PIN_1, ADC_CHANNEL_9}, ADC_SAMPLETIME_7CYCLES_5);
-	volt_calc_t VoltCalcParams = {((1 << 12) - 1), 3324, 82000, 10000, 17};
+	volt_calc_t VoltCalcParams = {((1 << 12) - 1), 3300, 69000, 10000, 0};
+
+	DrakePinD InPwrEn({GPIOB, GPIO_PIN_8}, DrakePin::Output, DrakePin::Low);
 	
 	AnalogMux<4> mux( OnMuxRequest, OnMuxResponse, 
 		DrakePin::PinD_t{GPIOB, GPIO_PIN_4}, 
@@ -105,6 +107,9 @@ namespace Analog
 	{
 		mux.Init();
 		adc_pin.Init();
+		InPwrEn.Init();
+		InPwrEn.On();
+		// Реализовать управление InPwrEn
 		
 		return;
 	}
