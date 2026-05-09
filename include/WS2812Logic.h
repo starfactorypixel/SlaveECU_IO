@@ -313,7 +313,7 @@ inline void Setup()
 	
 	mapper_func = mapper_2;
 
-	manager.SelectEffect(effect_reader, 100);
+	//manager.SelectEffect(effect_reader, 100);
 
 	//effect_primitive.Control(FrameEffectPrimitiveLights::SIGNAL_EMERGENCY, 255);
 
