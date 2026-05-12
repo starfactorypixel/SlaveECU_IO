@@ -8,8 +8,8 @@ namespace Outputs
 	/* Настройки */
 	static constexpr uint8_t CFG_PortCount = 8;			// Кол-во портов управления.
 	static constexpr uint32_t CFG_RefVoltage = 3300000;	// Опорное напряжение, микровольты.
-	static constexpr uint8_t CFG_INA180_Gain = 50;		// Усиление микросхемы INA180.
-	static constexpr uint8_t CFG_ShuntResistance = 5;	// Сопротивление шунта, миллиомы.
+	static constexpr uint8_t CFG_INA180_Gain = 100;		// Усиление микросхемы INA180.
+	static constexpr uint8_t CFG_ShuntResistance = 2;	// Сопротивление шунта, миллиомы.
 	/* */
 	
 	PowerOut<CFG_PortCount> outObj(&hadc1, CFG_RefVoltage, CFG_INA180_Gain, CFG_ShuntResistance);
