@@ -8,6 +8,7 @@
 #include "OutputLogic.h"
 #include "CANLogic.h"
 #include <Analog.h>
+#include <OneWire.h>
 #include <WS2812Logic.h>
 
 ADC_HandleTypeDef hadc1;
@@ -96,6 +97,7 @@ int main(void)
 	CANLib::Setup();
 	Analog::Setup();
 	Outputs::Setup();
+	OneWire::Setup();
 	WS2812Logic::Setup();
 	
 	uint32_t current_time = HAL_GetTick();
@@ -107,6 +109,7 @@ int main(void)
 		CANLib::Loop(current_time);
 		Analog::Loop(current_time);
 		Outputs::Loop(current_time);
+		OneWire::Loop(current_time);
 		WS2812Logic::Loop(current_time);
 	}
 }
