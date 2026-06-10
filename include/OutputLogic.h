@@ -37,8 +37,8 @@ namespace Outputs
 		outObj.AddPort( 3, {GPIOA, GPIO_PIN_4, ADC_CHANNEL_4}, 5000 );		// Выход 4
 		outObj.AddPort( 4, {GPIOA, GPIO_PIN_5, ADC_CHANNEL_5}, 5000 );		// Выход 5
 		outObj.AddPort( 5, {GPIOA, GPIO_PIN_6, ADC_CHANNEL_6}, 5000 );		// Выход 6
-		outObj.AddPort( 6, {GPIOA, GPIO_PIN_7, ADC_CHANNEL_7}, 15000 );		// Выход 7
-		outObj.AddPort( 7, {GPIOB, GPIO_PIN_0, ADC_CHANNEL_8}, 20000 );		// Выход HiPower-1
+		outObj.AddPort( 6, {GPIOA, GPIO_PIN_7, ADC_CHANNEL_7}, 5000 );		// Выход 7
+		outObj.AddPort( 7, {GPIOB, GPIO_PIN_0, ADC_CHANNEL_8}, 15000 );		// Выход HiPower-1
 		
 		outObj.Init();
 
