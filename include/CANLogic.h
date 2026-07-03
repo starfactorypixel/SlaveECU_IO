@@ -42,94 +42,7 @@ namespace CANLib
 
 
 
-	can_result_t OnPowerOutputCtrl(uint8_t port, can_frame_t &can_frame, can_error_t &error)
-	{
-		can_frame.initialized = true;
 
-		switch(can_frame.function_id)
-		{
-			case CAN_FUNC_SET_IN:
-			{
-				bool result = Outputs::outObj.SetWrite( port, can_frame.data[0] );
-				can_frame.function_id = (result == true) ? CAN_FUNC_EVENT_OK : CAN_FUNC_EVENT_ERROR;
-				can_frame.data[0] = (result == true) ? 0xFF : 0x00;
-				can_frame.raw_data_length = 2;
-				
-				break;
-			}
-			case CAN_FUNC_TOGGLE_IN:
-			{
-				Outputs::outObj.SetToggle(port);
-				can_frame.function_id = CAN_FUNC_EVENT_OK;
-				uint8_t result = (Outputs::outObj.GetState(port) > 0) ? 0xFF : 0x00;
-				can_frame.data[0] = result;
-				can_frame.raw_data_length = 2;
-				
-				break;
-			}
-			case CAN_FUNC_ACTION_IN:
-			{
-				bool result = Outputs::outObj.SetOn(port, 250);
-				can_frame.function_id = (result == true) ? CAN_FUNC_EVENT_OK : CAN_FUNC_EVENT_ERROR;
-				
-				break;
-			}
-			case CAN_FUNC_REQUEST_IN:
-			{
-				uint8_t result = (Outputs::outObj.GetState(port) > 0) ? 0xFF : 0x00;
-				can_frame.function_id = CAN_FUNC_EVENT_OK;
-				can_frame.data[0] = result;
-				
-				break;
-			}
-			default:
-			{
-				break;
-			}
-		}
-		
-		return CAN_RESULT_CAN_FRAME;
-	}
-
-	can_result_t OnPowerOutputCtrl_1(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(1, can_frame, error);
-	}
-
-	can_result_t OnPowerOutputCtrl_2(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(2, can_frame, error);
-	}
-
-	can_result_t OnPowerOutputCtrl_3(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(3, can_frame, error);
-	}
-
-	can_result_t OnPowerOutputCtrl_4(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(4, can_frame, error);
-	}
-
-	can_result_t OnPowerOutputCtrl_5(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(5, can_frame, error);
-	}
-
-	can_result_t OnPowerOutputCtrl_6(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(6, can_frame, error);
-	}
-
-	can_result_t OnPowerOutputCtrl_7(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(7, can_frame, error);
-	}
-
-	can_result_t OnPowerOutputCtrl_8(can_frame_t &can_frame, can_error_t &error)
-	{
-		return OnPowerOutputCtrl(8, can_frame, error);
-	}
 	
 	
 	void CAN_Enable()
@@ -185,45 +98,7 @@ namespace CANLib
 		can_manager.RegisterObject(obj_temperature);
 		can_manager.RegisterObject(obj_led_ctrl);
 
-		obj_out_1.RegisterFunctionSet(OnPowerOutputCtrl_1);
-		obj_out_1.RegisterFunctionToggle(OnPowerOutputCtrl_1);
-		obj_out_1.RegisterFunctionAction(OnPowerOutputCtrl_1);
-		obj_out_1.RegisterFunctionRequest(OnPowerOutputCtrl_1);
 
-		obj_out_2.RegisterFunctionSet(OnPowerOutputCtrl_2);
-		obj_out_2.RegisterFunctionToggle(OnPowerOutputCtrl_2);
-		obj_out_2.RegisterFunctionAction(OnPowerOutputCtrl_2);
-		obj_out_2.RegisterFunctionRequest(OnPowerOutputCtrl_2);
-
-		obj_out_3.RegisterFunctionSet(OnPowerOutputCtrl_3);
-		obj_out_3.RegisterFunctionToggle(OnPowerOutputCtrl_3);
-		obj_out_3.RegisterFunctionAction(OnPowerOutputCtrl_3);
-		obj_out_3.RegisterFunctionRequest(OnPowerOutputCtrl_3);
-
-		obj_out_4.RegisterFunctionSet(OnPowerOutputCtrl_4);
-		obj_out_4.RegisterFunctionToggle(OnPowerOutputCtrl_4);
-		obj_out_4.RegisterFunctionAction(OnPowerOutputCtrl_4);
-		obj_out_4.RegisterFunctionRequest(OnPowerOutputCtrl_4);
-
-		obj_out_5.RegisterFunctionSet(OnPowerOutputCtrl_5);
-		obj_out_5.RegisterFunctionToggle(OnPowerOutputCtrl_5);
-		obj_out_5.RegisterFunctionAction(OnPowerOutputCtrl_5);
-		obj_out_5.RegisterFunctionRequest(OnPowerOutputCtrl_5);
-
-		obj_out_6.RegisterFunctionSet(OnPowerOutputCtrl_6);
-		obj_out_6.RegisterFunctionToggle(OnPowerOutputCtrl_6);
-		obj_out_6.RegisterFunctionAction(OnPowerOutputCtrl_6);
-		obj_out_6.RegisterFunctionRequest(OnPowerOutputCtrl_6);
-
-		obj_out_7.RegisterFunctionSet(OnPowerOutputCtrl_7);
-		obj_out_7.RegisterFunctionToggle(OnPowerOutputCtrl_7);
-		obj_out_7.RegisterFunctionAction(OnPowerOutputCtrl_7);
-		obj_out_7.RegisterFunctionRequest(OnPowerOutputCtrl_7);
-
-		obj_out_8.RegisterFunctionSet(OnPowerOutputCtrl_8);
-		obj_out_8.RegisterFunctionToggle(OnPowerOutputCtrl_8);
-		obj_out_8.RegisterFunctionAction(OnPowerOutputCtrl_8);
-		obj_out_8.RegisterFunctionRequest(OnPowerOutputCtrl_8);
 
 
 

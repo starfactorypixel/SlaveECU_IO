@@ -400,7 +400,7 @@ inline void Loop(uint32_t &current_time)
 		//Logger.Print(frame_buffer_ptr, frame_buffer_len, LOG_OUT_TYPE_BYTES);
 		//Logger.Print("\n");
 
-		DEBUG_LOG_TOPIC("DMADraw", "time: %d\n", (HAL_GetTick() - lasttime));
+		//DEBUG_LOG_TOPIC("DMADraw", "time: %d\n", (HAL_GetTick() - lasttime));
 		lasttime = HAL_GetTick();
 	}
 
