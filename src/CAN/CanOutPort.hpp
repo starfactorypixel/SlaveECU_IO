@@ -26,42 +26,31 @@ class CanOutPort : public CANObjectBase
 		{
 			PowerOutBase::state_t state = (obj->val > 0) ? PowerOutBase::STATE_ON : PowerOutBase::STATE_OFF;
 			Outputs::ports.CtrlWrite(_port, state);
+			_GetAndSendPortState();
 			
-			event_ok_t answer = {};
-			answer.val = ((Outputs::ports.GetState(_port) == PowerOutBase::STATE_ON) ? 0xFF : 0x00);
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
-
 			return;
 		}
 		
 		void handlerToggleFunction(toggle_t *obj)
 		{
 			Outputs::ports.CtrlToggle(_port);
+			_GetAndSendPortState();
 			
-			event_ok_t answer = {};
-			answer.val = ((Outputs::ports.GetState(_port) == PowerOutBase::STATE_ON) ? 0xFF : 0x00);
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
-
 			return;
 		}
 		
 		void handlerActionFunction(action_t *obj)
 		{
 			Outputs::ports.CtrlOn(_port, 500);
+			_GetAndSendPortState();
 			
-			event_ok_t answer = {};
-			answer.val = ((Outputs::ports.GetState(_port) == PowerOutBase::STATE_ON) ? 0xFF : 0x00);
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
-
 			return;
 		}
 		
 		void handlerRequestFunction(request_t *obj)
 		{
-			event_ok_t answer = {};
-			answer.val = ((Outputs::ports.GetState(_port) == PowerOutBase::STATE_ON) ? 0xFF : 0x00);
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
-
+			_GetAndSendPortState();
+			
 			return;
 		}
 		
@@ -103,5 +92,12 @@ class CanOutPort : public CANObjectBase
 		}
 		
 	private:
+		void _GetAndSendPortState()
+		{
+			event_ok_t answer = {};
+			answer.val = ((Outputs::ports.GetState(_port) == PowerOutBase::STATE_ON) ? 0xFF : 0x00);
+			this->sendFrame((uint8_t *)&answer, sizeof(answer));
+		}
+		
 		Outputs::port_t _port;
 };

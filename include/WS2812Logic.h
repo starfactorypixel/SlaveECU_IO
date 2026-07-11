@@ -309,7 +309,7 @@ static void DMA_FullCpltCallback(DMA_HandleTypeDef *hdma)
 
 inline void Setup()
 {
-	srand( Analog::mux.Get(10) * 10 );
+	srand( Analog::GetMuxValue(Analog::PORT_IN10_NC) * 10 );
 	
 	mapper_func = mapper_2;
 

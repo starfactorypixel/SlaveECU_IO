@@ -13,6 +13,7 @@ namespace Analog
 	void OnMuxResponse(uint8_t address, uint16_t value);
 	
 	DrakePinA adc_pin({&hadc2, GPIOB, GPIO_PIN_1, ADC_CHANNEL_9}, ADC_SAMPLETIME_7CYCLES_5);
+	DividerVoltageCalc VoltCalcIn(12, 3300, 10400, 10000);
 	DividerVoltageCalc VoltCalc(12, 3300, 69000, 10000);
 
 	DrakePinD InPwrEn({GPIOB, GPIO_PIN_8}, DrakePin::Output, DrakePin::Low);
@@ -23,6 +24,25 @@ namespace Analog
 		DrakePin::PinD_t{GPIOB, GPIO_PIN_6}, 
 		DrakePin::PinD_t{GPIOB, GPIO_PIN_7}
 	);
+
+
+	// Входные АЦП порты, обрабатываемые мультиплексором
+	enum port_mux_t : uint8_t
+	{
+		PORT_IN_NONE,
+		PORT_IN1,     PORT_IN2,     PORT_IN3,      PORT_IN4,
+		PORT_IN5,     PORT_IN6,     PORT_IN7,      PORT_IN8,
+		PORT_IN9_NC,  PORT_IN10_NC, PORT_IN11_NC,  PORT_IN12_NC,
+		PORT_IN13_NC, PORT_IN14_NC, PORT_VIN,      PORT_NTC
+	};
+	
+	// Входные АЦП порты, обрабатываемые регулярной группой
+	enum port_regular_t : uint8_t
+	{
+		PORT_REG_NONE,
+		PORT_REG1, PORT_REG2, PORT_REG3, PORT_REG4, 
+		PORT_REG5, PORT_REG6, PORT_REG7, PORT_REG8
+	};
 
 
 
@@ -46,7 +66,19 @@ namespace Analog
 		{GPIOB, GPIO_PIN_0, ADC_CHANNEL_8, ADC_REGULAR_RANK_8}
 	};
 	static constexpr uint8_t regular_channel_count = sizeofarray(channels);
-	volatile uint16_t adc_buf[regular_channel_count];
+	volatile uint16_t regular_buf[regular_channel_count];
+
+	const uint16_t GetRegularValue(/*port_regular_t*/ uint8_t num)
+	{
+		if(--num >= regular_channel_count) return 0;
+
+		return regular_buf[num];
+	}
+
+	const uint16_t GetMuxValue(port_mux_t port)
+	{
+		return mux.Get(port);
+	}
 
 	
 	
@@ -59,57 +91,43 @@ namespace Analog
 	{
 		switch(address)
 		{
-			case 0:
-			{
-				CANLib::obj_in_1.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
-				break;
-			}
 			case 1:
 			{
-				CANLib::obj_in_2.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
 				break;
 			}
 			case 2:
 			{
-				CANLib::obj_in_3.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
 				break;
 			}
 			case 3:
 			{
-				CANLib::obj_in_4.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
 				break;
 			}
 			case 4:
 			{
-				CANLib::obj_in_5.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
 				break;
 			}
 			case 5:
 			{
-				CANLib::obj_in_6.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
 				break;
 			}
 			case 6:
 			{
-				CANLib::obj_in_7.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
 				break;
 			}
 			case 7:
 			{
-				CANLib::obj_in_8.SetValue(0, value, CAN_TIMER_TYPE_NORMAL);
 				break;
 			}
 			case 14:
 			{
-				uint16_t vin = VoltCalc.GetmV(value);
-				uint8_t *vin_bytes = (uint8_t *)&vin;
-
-				CANLib::obj_block_health.SetValue(0, vin_bytes[0]);
-				CANLib::obj_block_health.SetValue(1, vin_bytes[1]);
-
 				break;
 			}
 			case 15:
+			{
+				break;
+			}
+			case 16:
 			{
 				break;
 			}
@@ -119,14 +137,17 @@ namespace Analog
 			}
 		}
 		
-		if(address == 15)
+		if(address == 16)
 		{
-			DEBUG_LOG_TOPIC("MUX", "%04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d", mux.adc_value[0], mux.adc_value[1], mux.adc_value[2], 
-			mux.adc_value[3], mux.adc_value[4], mux.adc_value[5], mux.adc_value[6], mux.adc_value[7], mux.adc_value[8], mux.adc_value[9], mux.adc_value[10], mux.adc_value[11], 
-			mux.adc_value[12], mux.adc_value[13], mux.adc_value[14], mux.adc_value[15]);
+			/*
+			DEBUG_LOG_TOPIC("MUX", "%04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d %04d", 
+				mux.Get(1), mux.Get(2),  mux.Get(3),  mux.Get(4),  mux.Get(5),  mux.Get(6),  mux.Get(7),  mux.Get(8), 
+				mux.Get(9), mux.Get(10), mux.Get(11), mux.Get(12), mux.Get(13), mux.Get(14), mux.Get(15), mux.Get(16)
+			);
 
 			DEBUG_LOG_TOPIC("DNA", "    %04d %04d %04d %04d %04d %04d %04d %04d\n", 
-				adc_buf[0], adc_buf[1], adc_buf[2], adc_buf[3], adc_buf[4], adc_buf[5], adc_buf[6],adc_buf[7]);
+				regular_buf[0], regular_buf[1], regular_buf[2], regular_buf[3], regular_buf[4], regular_buf[5], regular_buf[6],regular_buf[7]);
+			*/
 		}
 		
 		return;
@@ -165,7 +186,7 @@ namespace Analog
 	inline void Setup()
 	{
 		HAL_ADCEx_Calibration_Start(&hadc1);
-		HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buf, 8);
+		HAL_ADC_Start_DMA(&hadc1, (uint32_t *)regular_buf, regular_channel_count);
 
 		mux.Init();
 		adc_pin.Init();

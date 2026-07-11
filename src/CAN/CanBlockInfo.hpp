@@ -42,8 +42,6 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 			_block_info.hw_type = About::board_type;
 			_block_info.can_ver = About::can_ver;
 			_block_info.sw_ver = About::soft_ver;
-			_block_info.temperature = INT8_MIN;
-			//GetSerialNumber(_block_info.sn);
 			
 			return;
 		};
@@ -142,8 +140,9 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 		void _PrepareBlockInfo()
 		{
 			_block_info.uptime = this->GetParent()->GetTime();
-			_block_info.voltage = Analog::VoltCalc.GetmV( Analog::mux.Get(Analog::PORT_VIN) );
+			_block_info.voltage = Analog::VoltCalc.GetmV( Analog::GetMuxValue(Analog::PORT_VIN) );
 			_block_info.current = Outputs::ports.GetCurrentAll();
+			_block_info.temperature = INT8_MIN;
 
 			return;
 		}

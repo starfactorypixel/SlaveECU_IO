@@ -9,7 +9,7 @@ class CanInPort : public CANObjectBase
 	struct __attribute__((packed)) event_er_t { uint8_t fId = CAN_FUNC_EVENT_ERROR; uint8_t val1; uint8_t val2; };
 	
 	public:
-		CanInPort(can_object_id_t id, Analog::port_in_t port, uint16_t timer) : CANObjectBase(id), _port(port)
+		CanInPort(can_object_id_t id, Analog::port_mux_t port, uint16_t timer) : CANObjectBase(id), _port(port)
 		{
 			this->SetTimerPeriod(timer);
 
@@ -19,7 +19,7 @@ class CanInPort : public CANObjectBase
 	protected:
 		void handlerRequestFunction(request_t *obj)
 		{
-			uint16_t adc = Analog::mux.Get(_port);
+			uint16_t adc = Analog::GetMuxValue(_port);
 			
 			event_ok_t answer = {};
 			answer.adc = adc;
@@ -31,13 +31,7 @@ class CanInPort : public CANObjectBase
 		
 		virtual void OnTick(uint32_t time) noexcept override
 		{
-			/*
-			uint16_t new_data = Analog::obj.Read(_port);
-        if (_data != new_data) {
-            _data = new_data;
-            this->sendFrame(CAN_FUNC_EVENT_OK, &_data, sizeof(_data));
-        	}
-			*/
+			return;
 		}
 
 		virtual void OnProcessFrame(can_frame_t &can_frame) noexcept override
@@ -58,7 +52,7 @@ class CanInPort : public CANObjectBase
 
 		virtual void OnTimer() noexcept override
 		{
-			uint16_t adc = Analog::mux.Get(_port);
+			uint16_t adc = Analog::GetMuxValue(_port);
 			
 			timer_t answer = {};
 			answer.fId = CAN_FUNC_TIMER_NORMAL;
@@ -68,5 +62,5 @@ class CanInPort : public CANObjectBase
 		}
 		
 	private:
-		Analog::port_in_t _port;
+		Analog::port_mux_t _port;
 };
