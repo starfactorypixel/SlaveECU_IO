@@ -1,5 +1,6 @@
 #pragma once
 #include <inttypes.h>
+#include <CanObjectBase.h>
 
 class CanInPort : public CANObjectBase
 {
@@ -24,7 +25,7 @@ class CanInPort : public CANObjectBase
 			event_ok_t answer = {};
 			answer.adc = adc;
 			answer.mv = Analog::VoltCalcIn.GetmV(adc);
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
+			this->SendFrame((uint8_t *)&answer, sizeof(answer));
 
 			return;
 		}
@@ -58,7 +59,7 @@ class CanInPort : public CANObjectBase
 			answer.fId = CAN_FUNC_TIMER_NORMAL;
 			answer.adc = adc;
 			answer.mv = Analog::VoltCalcIn.GetmV(adc);
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
+			this->SendFrame((uint8_t *)&answer, sizeof(answer));
 		}
 		
 	private:

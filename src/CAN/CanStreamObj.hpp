@@ -1,5 +1,6 @@
 #pragma once
 #include <inttypes.h>
+#include <CanObjectBase.h>
 
 template <typename T> 
 class CanStreamObj : public CANObjectBase
@@ -69,7 +70,7 @@ class CanStreamObj : public CANObjectBase
 			stream_t answer = {};
 			answer.num = idx + 1;
 			answer.val = _collection[idx];
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
+			this->SendFrame((uint8_t *)&answer, sizeof(answer));
 
 			return;
 		}

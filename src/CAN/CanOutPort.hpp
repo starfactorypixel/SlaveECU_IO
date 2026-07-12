@@ -1,5 +1,6 @@
 #pragma once
 #include <inttypes.h>
+#include <CanObjectBase.h>
 
 class CanOutPort : public CANObjectBase
 {
@@ -96,7 +97,7 @@ class CanOutPort : public CANObjectBase
 		{
 			event_ok_t answer = {};
 			answer.val = ((Outputs::ports.GetState(_port) == PowerOutBase::STATE_ON) ? 0xFF : 0x00);
-			this->sendFrame((uint8_t *)&answer, sizeof(answer));
+			this->SendFrame((uint8_t *)&answer, sizeof(answer));
 		}
 		
 		Outputs::port_t _port;

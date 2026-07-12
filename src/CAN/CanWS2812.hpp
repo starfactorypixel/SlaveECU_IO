@@ -1,5 +1,6 @@
 #pragma once
 #include <inttypes.h>
+#include <CanObjectBase.h>
 
 class CanWS2812 : public CANObjectBase
 {

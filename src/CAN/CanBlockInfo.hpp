@@ -1,5 +1,8 @@
 #pragma once
 #include <inttypes.h>
+#include <string.h>
+#include <CanObjectBase.h>
+#include <CANBackEvents.h>
 
 class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 {
@@ -118,7 +121,7 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 		{
 			block_wakeup_t wakeup = {};
 			wakeup.reason = reason;
-			this->sendFrame((uint8_t *)&wakeup, sizeof(wakeup));
+			this->SendFrame((uint8_t *)&wakeup, sizeof(wakeup));
 			
 			return;
 		}
@@ -126,7 +129,7 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 		void _SendHeartbeat()
 		{
 			_heartbeat.counter += 1;
-			this->sendFrame((uint8_t *)&_heartbeat, sizeof(_heartbeat));
+			this->SendFrame((uint8_t *)&_heartbeat, sizeof(_heartbeat));
 			
 			return;
 		}
@@ -159,7 +162,7 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 			error.group = group;
 			error.code = code;
 			error.subcode = subcode;
-			this->sendFrame((uint8_t *)&error, sizeof(error));
+			this->SendFrame((uint8_t *)&error, sizeof(error));
 			
 			return;
 		}
@@ -182,7 +185,7 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 				memcpy(&buff[2], data_ptr + offset, buff_len);
 				offset += payload_size;
 				
-				this->sendFrame(buff, buff_len + header_size);
+				this->SendFrame(buff, buff_len + header_size);
 			}
 			
 			return;
