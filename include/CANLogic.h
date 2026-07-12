@@ -69,10 +69,32 @@ namespace CANLib
 			__HAL_CAN_DISABLE_IT(&hcan, CAN_IT_TX_MAILBOX_EMPTY);
 	}
 
+	void OnStaticInfoReq(CanBlockInfo::block_info_static_t &data)
+	{
+		data.hw_ver = About::board_ver;
+		data.hw_type = About::board_type;
+		data.can_ver = About::can_ver;
+		data.sw_ver = About::soft_ver;
+		memcpy(data.sn, About::sn, sizeof(data.sn));
+		memcpy(data.features, (const uint8_t *)&About::features, sizeof(data.features));
+
+		return;
+	}
+
+	void OnDynamicInfoReq(CanBlockInfo::block_info_dynamic_t &data)
+	{
+		data.uptime = HAL_GetTick();
+		data.voltage = Analog::VoltCalc.GetmV( Analog::GetMuxValue(Analog::PORT_VIN) );
+		data.current = Outputs::ports.GetCurrentAll();
+		data.temperature = INT8_MIN;
+
+		return;
+	}
+
 
 	CANManager<22> can_manager(&HAL_CAN_Send, &HAL_GetTick, &OnInterruptCtrl);
 
-	CanBlockInfo obj_block_info(0x0160);
+	CanBlockInfo obj_block_info(0x0160, OnStaticInfoReq, OnDynamicInfoReq);
 	
 	CanOutPort obj_out_1(0x0164, Outputs::PORT_1);
 	CanOutPort obj_out_2(0x0165, Outputs::PORT_2);
@@ -138,9 +160,9 @@ namespace CANLib
 	{
 		can_rs.Init();
 		
-		obj_block_info.SetSN(About::sn);
+		//obj_block_info.SetSN(About::sn);
 		// Необходимо чтобы ДО этого вызова структура возможностей уже была заполенна
-		obj_block_info.SetFeatures(About::features);
+		//obj_block_info.SetFeatures(About::features);
 		
 		can_manager.AddObject(obj_block_info);
 		can_manager.AddObject(obj_out_1);
