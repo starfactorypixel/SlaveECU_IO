@@ -7,7 +7,7 @@ class CanStreamObj : public CANObjectBase
 {
 	//using T = int8_t;
 	struct __attribute__((packed)) request_t { uint8_t fId; };
-	struct __attribute__((packed)) stream_t { uint8_t fId = 0x65; uint8_t num; T val; };	// Это не просто event, видимо нужно другой fId
+	struct __attribute__((packed)) stream_t { uint8_t fId = 0x65; uint8_t num; T val; };
 	
 	public:
 		CanStreamObj(can_object_id_t id, const T *collection, uint8_t length) : CANObjectBase(id), _collection(collection), _length(length)
