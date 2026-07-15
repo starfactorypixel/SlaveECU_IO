@@ -10,7 +10,7 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 	struct __attribute__((packed)) heartbeat_t { uint8_t fId = 0x71; uint8_t counter; };
 	// uint8_t fId = 0x72; - block_info_static_t
 	// uint8_t fId = 0x73; - block_info_dynamic_t
-	struct __attribute__((packed)) error_t
+	struct __attribute__((packed)) block_error_t
 	{
 		uint8_t fId = 0x75;
 		uint8_t group;				// Группа ошибки
@@ -158,7 +158,7 @@ class CanBlockInfo : public CANObjectBase, public IBlockInfoSender
 		
 		void _SendError(uint8_t group, uint8_t code, uint16_t subcode)
 		{
-			error_t error = {};
+			block_error_t error = {};
 			error.group = group;
 			error.code = code;
 			error.subcode = subcode;
