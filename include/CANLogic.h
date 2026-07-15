@@ -2,6 +2,7 @@
 #include <DrakePinD.hpp>
 #include <CANLibrary.h>
 #include <CAN/CanBlockInfo.hpp>
+#include <CAN/CanBlockCfg.hpp>
 #include <CAN/CanOutPort.hpp>
 #include <CAN/CanInPort.hpp>
 #include <CAN/CanStreamObj.hpp>
@@ -91,10 +92,29 @@ namespace CANLib
 		return;
 	}
 
+	
+	
+	static const CanBlockCfg::config_item_t block_cfg_table[] =
+	{
+		{1, sizeof(uint16_t), &Config::obj.body.in1.interval_ms},
+		{2, sizeof(uint16_t), &Config::obj.body.in2.interval_ms},
+		{3, sizeof(uint16_t), &Config::obj.body.in3.interval_ms},
+		{4, sizeof(uint16_t), &Config::obj.body.in4.interval_ms},
+		{5, sizeof(uint16_t), &Config::obj.body.in5.interval_ms},
+		{6, sizeof(uint16_t), &Config::obj.body.in6.interval_ms},
+	};
+	static constexpr uint8_t block_cfg_table_count = sizeofarray(block_cfg_table);
+	
+	void OnCfgSaveReset()
+	{
+		return;
+	}
+
 
 	CANManager<22> can_manager(&HAL_CAN_Send, &HAL_GetTick, &OnInterruptCtrl);
 
 	CanBlockInfo obj_block_info(CAN_BASE_ID+0, OnStaticInfoReq, OnDynamicInfoReq);
+	CanBlockCfg obj_block_cfg(CAN_BASE_ID+1, &OnCfgSaveReset, block_cfg_table, block_cfg_table_count);
 	CanOutPort obj_out_1(CAN_BASE_ID+4, Outputs::PORT_1);
 	CanOutPort obj_out_2(CAN_BASE_ID+5, Outputs::PORT_2);
 	CanOutPort obj_out_3(CAN_BASE_ID+6, Outputs::PORT_3);
@@ -161,6 +181,7 @@ namespace CANLib
 		//obj_block_info.SetFeatures(About::features);
 		
 		can_manager.AddObject(obj_block_info);
+		can_manager.AddObject(obj_block_cfg);
 		can_manager.AddObject(obj_out_1);
 		can_manager.AddObject(obj_out_2);
 		can_manager.AddObject(obj_out_3);
