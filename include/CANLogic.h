@@ -1,12 +1,12 @@
 #pragma once
 #include <DrakePinD.hpp>
 #include <CANLibrary.h>
-#include <CAN/CanBlockInfo.hpp>
-#include <CAN/CanBlockCfg.hpp>
-#include <CAN/CanOutPort.hpp>
-#include <CAN/CanInPort.hpp>
-#include <CAN/CanStreamObj.hpp>
-#include <CAN/CanWS2812.hpp>
+#include <CanObj/CanBlockInfo.hpp>
+#include <CanObj/CanBlockCfg.hpp>
+#include <CanObj/CanOutPort.hpp>
+#include <CanObj/CanInPort.hpp>
+#include <CanObj/CanStreamObj.hpp>
+#include <CanObj/CanWS2812.hpp>
 
 extern CAN_HandleTypeDef hcan;
 extern bool HAL_CAN_Send(uint16_t id, uint8_t *data_raw, uint8_t length_raw);
