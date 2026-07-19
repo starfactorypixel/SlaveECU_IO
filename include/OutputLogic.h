@@ -1,5 +1,6 @@
 #pragma once
 #include <PowerOutV2.h>
+#include <CanObj/IBlockInfoSender.hpp>
 #include <CUtils.h>
 
 extern IBlockInfoSender &BlockInfoSender;
