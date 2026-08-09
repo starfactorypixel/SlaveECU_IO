@@ -64,6 +64,10 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan)
 
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {
+	uint32_t code = HAL_CAN_GetError(hcan);
+	if((code & (HAL_CAN_ERROR_TX_ALST0 | HAL_CAN_ERROR_TX_ALST1 | HAL_CAN_ERROR_TX_ALST2)) != 0)
+		return;
+	
 	Leds::obj.SetOn(Leds::LED_RED, 100);
 	DEBUG_LOG_TOPIC("CAN", "RX error event, code: 0x%08lX\n", HAL_CAN_GetError(hcan));
 	HAL_CAN_ResetError(hcan);
