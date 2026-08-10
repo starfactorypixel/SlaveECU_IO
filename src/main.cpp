@@ -90,17 +90,6 @@ bool HAL_CAN_Send(can_object_id_t id, uint8_t *TxData, uint8_t length)
 }
 
 
-void GetSerialNumber(uint8_t *sn)
-{
-	const uint32_t *uid = (const uint32_t *)UID_BASE;
-	
-	uint32_t serial[2];
-	serial[0] = uid[0] ^ uid[2];
-	serial[1] = uid[1];
-	memcpy(sn, serial, sizeof(serial));
-}
-
-
 int main(void)
 {
 	HAL_Init();
