@@ -10,7 +10,7 @@
 #include "CANFunc.h"
 
 extern CAN_HandleTypeDef hcan;
-extern bool HAL_CAN_Send(uint16_t id, uint8_t *data_raw, uint8_t length_raw);
+extern bool HAL_CAN_Send(can_object_id_t id, uint8_t *data, uint8_t length);
 
 namespace CANLib
 {

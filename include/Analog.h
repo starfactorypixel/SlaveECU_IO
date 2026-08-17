@@ -80,7 +80,7 @@ namespace Analog
 			{
 				break;
 			}
-			case 14:
+			case 8:
 			{
 				break;
 			}
