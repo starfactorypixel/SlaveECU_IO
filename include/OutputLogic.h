@@ -28,7 +28,7 @@ namespace Outputs
 
 	void OnControl(uint8_t port, uint8_t id, uint8_t state)
 	{
-		bool new_state = (state == PowerOutBase::STATE_ON) ? false : true;
+		bool new_state = (state == PowerOutBase::STATE_ON) ? true : false;
 		SPI::hc595.SetState(0, id, new_state);
 	}
 	
